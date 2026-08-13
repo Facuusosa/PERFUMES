@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playground de estilos — Perfumes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0b0a08;
+    --bg-2: #141210;
+    --fg: #f3ede4;
+    --fg-muted: #a89e8f;
+    --accent: #b5652d;
+    --line: rgba(243,237,228,0.14);
+    --serif: 'Fraunces', serif;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:var(--sans);
+    overflow-x:hidden;
+    cursor:none;
+  }
+  section{position:relative; min-height:100vh; padding:6vw;}
+  .tag{
+    position:absolute; top:2rem; left:2rem;
+    font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--fg-muted); font-family:var(--sans); z-index:5;
+  }
+  .tag b{color:var(--accent);}
+
+  /* cursor custom */
+  #cursor{
+    position:fixed; width:22px; height:22px; border:1px solid var(--fg);
+    border-radius:50%; pointer-events:none; z-index:999; mix-blend-mode:difference;
+    transform:translate(-50%,-50%); transition:width .2s, height .2s, border-color .2s;
+  }
+  #cursor.hover{width:56px; height:56px; border-color:var(--accent);}
+
+  /* HERO */
+  #hero{display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at 50% 40%, var(--bg-2), var(--bg) 70%);}
+  #canvas3d{position:absolute; inset:0; width:100%; height:100%;}
+  .hero-text{position:relative; z-index:2; text-align:center; pointer-events:none;}
+  .hero-text h1{
+    font-family:var(--serif); font-weight:300; font-style:italic;
+    font-size:clamp(3rem, 9vw, 7.5rem); line-height:0.95; letter-spacing:-0.01em;
+  }
+  .hero-text p{
+    margin-top:1.2rem; font-size:13px; letter-spacing:0.15em; text-transform:uppercase; color:var(--fg-muted);
+  }
+  .scroll-hint{position:absolute; bottom:2.5rem; left:50%; transform:translateX(-50%); font-size:11px; color:var(--fg-muted); letter-spacing:0.1em;}
+
+  /* STORY / scroll reveal */
+  #story{display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2vw; background:var(--bg);}
+  .reveal-line{
+    font-family:var(--serif); font-weight:300; font-size:clamp(1.8rem, 5vw, 3.6rem);
+    color:var(--fg-muted); line-height:1.15; max-width:900px;
+  }
+  .reveal-line em{font-style:italic; color:var(--fg);}
+  .reveal-line.active{color:var(--fg);}
+
+  /* GRID */
+  #grid{background:var(--bg-2);}
+  .grid-head{margin-bottom:3rem;}
+  .grid-head h2{font-family:var(--serif); font-weight:300; font-style:italic; font-size:clamp(2rem,4vw,3rem);}
+  .grid-wrap{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line);}
+  .card{
+    background:var(--bg-2); padding:2.5rem 1.5rem; position:relative; overflow:hidden;
+    transition:background .4s;
+  }
+  .card:hover{background:var(--bg);}
+  .card .num{font-size:11px; color:var(--fg-muted); letter-spacing:0.1em;}
+  .card h3{font-family:var(--serif); font-weight:400; font-size:1.4rem; margin:2.5rem 0 0.5rem;}
+  .card p{font-size:13px; color:var(--fg-muted);}
+  .card .price{margin-top:1.5rem; font-size:13px; letter-spacing:0.05em;}
+  .card .swatch{
+    position:absolute; right:-40px; bottom:-40px; width:140px; height:140px; border-radius:50%;
+    background:var(--accent); opacity:0.08; transition:transform .5s ease, opacity .5s ease;
+  }
+  .card:hover .swatch{transform:scale(1.4); opacity:0.16;}
+
+  /* CTA magnetic */
+  #cta{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2.5rem; text-align:center;}
+  #cta h2{font-family:var(--serif); font-weight:300; font-style:italic; font-size:clamp(2rem,5vw,3.2rem); max-width:700px;}
+  .magnetic-btn{
+    position:relative; padding:1.1rem 3rem; border:1px solid var(--fg); border-radius:100px;
+    font-family:var(--sans); font-size:13px; letter-spacing:0.1em; text-transform:uppercase;
+    background:transparent; color:var(--fg); overflow:hidden;
+  }
+  .magnetic-btn span{position:relative; z-index:2; mix-blend-mode:difference;}
+  .magnetic-btn::before{
+    content:''; position:absolute; inset:0; background:var(--accent); border-radius:100px;
+    transform:scale(0); transition:transform .4s ease;
+  }
+  .magnetic-btn:hover::before{transform:scale(1);}
+
+  /* LOADER */
+  #loader{
+    position:fixed; inset:0; background:var(--bg); z-index:1000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2rem;
+    transition:opacity .8s ease, visibility .8s ease;
+  }
+  #loader.done{opacity:0; visibility:hidden;}
+  #loader .mark{font-family:var(--serif); font-style:italic; font-weight:300; font-size:2rem; color:var(--fg-muted); letter-spacing:0.05em;}
+  #loader .pct{font-family:var(--sans); font-size:13px; letter-spacing:0.2em; color:var(--fg);}
+
+  /* ICON RAIL */
+  #rail{
+    position:fixed; right:2rem; top:50%; transform:translateY(-50%); z-index:50;
+    display:flex; flex-direction:column; gap:0.9rem;
+  }
+  #rail button{
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--line);
+    background:var(--bg-2); color:var(--fg-muted); font-family:var(--sans); font-size:11px;
+    cursor:pointer; transition:all .3s ease;
+  }
+  #rail button.active{border-color:var(--accent); color:var(--accent); background:rgba(181,101,45,0.12);}
+
+  /* REVEAL COMPARISON */
+  #trust{background:var(--bg); padding-top:8vw; padding-bottom:8vw;}
+  .trust-row{
+    display:flex; align-items:center; gap:2rem; padding:1.6rem 0; border-top:1px solid var(--line);
+    max-width:800px;
+  }
+  .trust-row:last-child{border-bottom:1px solid var(--line);}
+  .trust-bad{
+    font-family:var(--sans); font-size:14px; color:var(--fg-muted); text-decoration:line-through;
+    text-decoration-color:var(--accent); min-width:220px;
+  }
+  .trust-good{font-family:var(--serif); font-style:italic; font-size:1.6rem; color:var(--fg);}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="mark">Perfumes</div>
+  <div class="pct">0%</div>
+</div>
+
+<div id="cursor"></div>
+
+<nav id="rail">
+  <button class="active" data-target="hero">01</button>
+  <button data-target="story">02</button>
+  <button data-target="trust">03</button>
+  <button data-target="grid">04</button>
+  <button data-target="cta">05</button>
+</nav>
+
+<section id="hero">
+  <div class="tag"><b>01</b> — Hero 3D, tilt con mouse</div>
+  <canvas id="canvas3d"></canvas>
+  <div class="hero-text">
+    <h1>Perfumes</h1>
+    <p>Árabes · Nicho · Natura</p>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</section>
+
+<section id="story">
+  <div class="tag"><b>02</b> — Storytelling con scroll reveal</div>
+  <p class="reveal-line">No vendemos frascos.</p>
+  <p class="reveal-line">Vendemos <em>la primera impresión</em> que da tu clienta</p>
+  <p class="reveal-line">antes de <em>decir una palabra.</em></p>
+</section>
+
+<section id="trust">
+  <div class="tag"><b>03</b> — Reveal de comparación (confianza, no fórmula)</div>
+  <div class="grid-head"><h2>Por qué comprarle a ella</h2></div>
+  <div class="trust-row"><span class="trust-bad">Reventa sin garantía</span><span class="trust-good">Producto verificado</span></div>
+  <div class="trust-row"><span class="trust-bad">Esperar semanas</span><span class="trust-good">Envío en 48hs</span></div>
+  <div class="trust-row"><span class="trust-bad">Sin devolución</span><span class="trust-good">Cambios sin drama</span></div>
+</section>
+
+<section id="grid">
+  <div class="tag"><b>04</b> — Grilla de producto, sin cards genéricas</div>
+  <div class="grid-head">
+    <h2>La selección</h2>
+  </div>
+  <div class="grid-wrap">
+    <div class="card"><div class="num">01</div><h3>Oud Real</h3><p>Inspirado · Árabe</p><div class="price">AR$ 18.500</div><div class="swatch"></div></div>
+    <div class="card"><div class="num">02</div><h3>Kaiak</h3><p>Natura</p><div class="price">AR$ 9.200</div><div class="swatch"></div></div>
+    <div class="card"><div class="num">03</div><h3>Ambre Nuit</h3><p>Nicho</p><div class="price">AR$ 24.000</div><div class="swatch"></div></div>
+    <div class="card"><div class="num">04</div><h3>Musk Al Haramain</h3><p>Inspirado · Árabe</p><div class="price">AR$ 16.800</div><div class="swatch"></div></div>
+  </div>
+</section>
+
+<section id="cta">
+  <div class="tag"><b>05</b> — Botón magnético</div>
+  <h2>Cada frasco cuenta una historia distinta.</h2>
+  <button class="magnetic-btn" id="magBtn"><span>Ver catálogo completo</span></button>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+  // custom cursor
+  const cursor = document.getElementById('cursor');
+  window.addEventListener('mousemove', e=>{
+    cursor.style.left = e.clientX+'px';
+    cursor.style.top = e.clientY+'px';
+  });
+  document.querySelectorAll('.card, .magnetic-btn').forEach(el=>{
+    el.addEventListener('mouseenter', ()=>cursor.classList.add('hover'));
+    el.addEventListener('mouseleave', ()=>cursor.classList.remove('hover'));
+  });
+
+  // magnetic button
+  const btn = document.getElementById('magBtn');
+  btn.addEventListener('mousemove', e=>{
+    const r = btn.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width/2;
+    const y = e.clientY - r.top - r.height/2;
+    btn.style.transform = `translate(${x*0.3}px, ${y*0.5}px)`;
+  });
+  btn.addEventListener('mouseleave', ()=>{ btn.style.transform = 'translate(0,0)'; });
+
+  // three.js bottle
+  const canvas = document.getElementById('canvas3d');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.set(0,0,7);
+
+  const key = new THREE.PointLight(0xffe3c2, 1.4); key.position.set(3,4,5); scene.add(key);
+  const rim = new THREE.PointLight(0xb5652d, 1.2); rim.position.set(-4,-2,3); scene.add(rim);
+  scene.add(new THREE.AmbientLight(0x222222));
+
+  const bottle = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({color:0x2a2a2a, metalness:0.3, roughness:0.15});
+  const capMat = new THREE.MeshStandardMaterial({color:0xb5652d, metalness:0.6, roughness:0.3});
+
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(1,1.15,2.4,32), bodyMat);
+  bottle.add(body);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.4,0.7,32), bodyMat);
+  neck.position.y = 1.55; bottle.add(neck);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.6,32), capMat);
+  cap.position.y = 2.2; bottle.add(cap);
+  scene.add(bottle);
+
+  let targetX=0, targetY=0;
+  window.addEventListener('mousemove', e=>{
+    targetX = (e.clientX/window.innerWidth - 0.5) * 0.8;
+    targetY = (e.clientY/window.innerHeight - 0.5) * 0.5;
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    bottle.rotation.y += (targetX - bottle.rotation.y*0 + 0.4 - bottle.rotation.y)*0.02 + 0.003;
+    bottle.rotation.x += (-targetY - bottle.rotation.x)*0.05;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // gsap scroll reveal
+  gsap.registerPlugin(ScrollTrigger);
+  gsap.utils.toArray('.reveal-line').forEach(line=>{
+    ScrollTrigger.create({
+      trigger:line, start:'top 70%', end:'top 30%',
+      onEnter:()=>line.classList.add('active'),
+      onLeaveBack:()=>line.classList.remove('active')
+    });
+  });
+
+  // loader cinemático
+  const loader = document.getElementById('loader');
+  const pct = loader.querySelector('.pct');
+  let p = 0;
+  const loadInt = setInterval(()=>{
+    p += Math.floor(Math.random()*9)+3;
+    if(p>=100){ p=100; clearInterval(loadInt); setTimeout(()=>loader.classList.add('done'),300); }
+    pct.textContent = p+'%';
+  }, 90);
+
+  // riel de navegación: resalta la sección activa
+  const railBtns = document.querySelectorAll('#rail button');
+  const railSections = Array.from(railBtns).map(b=>document.getElementById(b.dataset.target));
+  railBtns.forEach(b=>b.addEventListener('click', ()=>{
+    document.getElementById(b.dataset.target).scrollIntoView({behavior:'smooth'});
+  }));
+  ScrollTrigger.batch(railSections, {
+    start:'top center', end:'bottom center',
+    onEnter: el => setActiveRail(el.id),
+    onEnterBack: el => setActiveRail(el.id)
+  });
+  function setActiveRail(id){
+    railBtns.forEach(b=>b.classList.toggle('active', b.dataset.target===id));
+  }
+</script>
+</body>
+</html>
