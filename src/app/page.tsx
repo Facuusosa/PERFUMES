@@ -1,5 +1,5 @@
-import { Preloader } from "@/components/preloader";
+import { Hero } from "@/components/hero";
 
 export default function Home() {
-  return <Preloader />;
+  return <Hero />;
 }
