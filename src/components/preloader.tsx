@@ -75,8 +75,8 @@ export function Preloader() {
       ))}
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
 
-      <div className="relative flex flex-col items-center gap-6">
-        <p className="font-heading text-5xl italic tracking-tight text-foreground sm:text-7xl">
+      <div className="relative flex flex-col items-center gap-8">
+        <p className="font-heading text-6xl italic tracking-tight text-foreground sm:text-8xl lg:text-9xl">
           A&G
         </p>
         <p className="font-sans text-sm tabular-nums tracking-[0.3em] text-muted-foreground">
