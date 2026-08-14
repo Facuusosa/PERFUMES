@@ -1,5 +1,11 @@
 import { Hero } from "@/components/hero";
+import { Preloader } from "@/components/preloader";
 
 export default function Home() {
-  return <Hero />;
+  return (
+    <>
+      <Preloader />
+      <Hero />
+    </>
+  );
 }
