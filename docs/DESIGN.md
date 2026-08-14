@@ -7,7 +7,12 @@ Sacada de tono de vidrio/ámbar de frasco de perfume, no de un generador de pale
 - `--bg-2: #141210` — superficie secundaria
 - `--fg: #f3ede4` — texto principal, hueso
 - `--fg-muted: #a89e8f` — texto secundario
-- `--accent: #b5652d` — ámbar, único color de acento
+- `--accent: #b5652d` — ámbar, único color de acento **de la interfaz** (nav, botones,
+  líneas, hover, focus). No aplica a la fotografía de producto: cada perfume tiene su color
+  real (vidrio verde, rosa, dorado...) y se muestra tal cual — cambiarle el color al
+  producto rompe la confianza que busca `PRODUCT.md`. En hero/preloader las fotos llevan un
+  velo oscuro sutil (CSS, no quemado en la imagen) para convivir con el clima
+  cinematográfico sin perder el color real; en la grilla de catálogo van sin velo.
 
 ## Tipografía
 - Display/editorial: **Fraunces** (serif, itálica en momentos clave)
