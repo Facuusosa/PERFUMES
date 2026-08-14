@@ -7,7 +7,12 @@ Sacada de tono de vidrio/ámbar de frasco de perfume, no de un generador de pale
 - `--bg-2: #141210` — superficie secundaria
 - `--fg: #f3ede4` — texto principal, hueso
 - `--fg-muted: #a89e8f` — texto secundario
-- `--accent: #b5652d` — ámbar, único color de acento
+- `--accent: #b5652d` — ámbar, único color de acento **de la interfaz** (nav, botones,
+  líneas, hover, focus). No aplica a la fotografía de producto: cada perfume tiene su color
+  real (vidrio verde, rosa, dorado...) y se muestra tal cual — cambiarle el color al
+  producto rompe la confianza que busca `PRODUCT.md`. En hero/preloader las fotos llevan un
+  velo oscuro sutil (CSS, no quemado en la imagen) para convivir con el clima
+  cinematográfico sin perder el color real; en la grilla de catálogo van sin velo.
 
 ## Tipografía
 - Display/editorial: **Fraunces** (serif, itálica en momentos clave)
@@ -37,7 +42,7 @@ Sacada de tono de vidrio/ámbar de frasco de perfume, no de un generador de pale
 ## Mecanismos a implementar (en orden de prioridad)
 
 1. **Loader cinemático** — pantalla negra, logo, contador 0→100%, fade a hero. (ref: Ciao Energy)
-2. **Hero con producto + zoom/parallax en scroll** — fase 1: foto fija con zoom/parallax. Fase 2 (cuando haya fotos reales del producto): secuencia de imágenes tipo Apple. No usar 3D real-time (WebGL) como base, es sobre-ingeniería para este catálogo.
+2. **Hero con producto + zoom/parallax en scroll** — fase 1: foto fija con zoom/parallax. Fase 2 (cuando haya fotos reales del producto): secuencia de imágenes tipo Apple. No usar 3D real-time (WebGL) como base, es sobre-ingeniería para este catálogo. **Estado (2026-08-14):** implementado con rotación automática entre 3 fotos + tilt al mouse (CSS transform, sin WebGL); el zoom/parallax atado a scroll de este punto queda pendiente hasta que haya contenido debajo del hero para scrollear.
 3. **Riel de navegación lateral fijo** — botones circulares por sección, el activo se resalta. (ref: Ciao Energy)
 4. **Reveal de comparación** — tachar lo malo, mostrar lo bueno. Adaptado a confianza de reventa (NO a fórmula de fabricante, la clienta no fabrica nada):
    - "Reventa sin garantía ✕" → "Producto verificado"
