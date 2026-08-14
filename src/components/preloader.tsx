@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const BACKDROP_IMAGES = [
-  "/hero/preloader-1-yara-exclusive.png",
-  "/hero/preloader-2-qimmah.png",
+  "/hero/preloader-1-yara-exclusive.webp",
+  "/hero/preloader-2-qimmah.webp",
 ];
 
 const COUNT_DURATION_MS = 2200;
@@ -19,12 +19,17 @@ export function Preloader() {
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    const duration = prefersReducedMotion ? 0 : COUNT_DURATION_MS;
+
     const start = performance.now();
     let frame: number;
 
     const tick = (now: number) => {
       const elapsed = now - start;
-      const progress = Math.min(1, elapsed / COUNT_DURATION_MS);
+      const progress = duration === 0 ? 1 : Math.min(1, elapsed / duration);
       setCount(Math.round(progress * 100));
       if (progress < 1) {
         frame = requestAnimationFrame(tick);
@@ -38,11 +43,12 @@ export function Preloader() {
   }, []);
 
   useEffect(() => {
+    if (done) return;
     const interval = setInterval(() => {
       setActiveImage((i) => (i + 1) % BACKDROP_IMAGES.length);
     }, CROSSFADE_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [done]);
 
   useEffect(() => {
     if (!done) return;

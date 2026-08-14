@@ -4,9 +4,9 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 const HERO_IMAGES = [
-  { src: "/hero/hero-1-odyssey.png", alt: "Armaf Odyssey" },
-  { src: "/hero/hero-2-art-of-universe.png", alt: "Lattafa Pride Art of Universe" },
-  { src: "/hero/hero-3-now-women.png", alt: "Rave Now Women" },
+  { src: "/hero/hero-1-odyssey.webp", alt: "Armaf Odyssey" },
+  { src: "/hero/hero-2-art-of-universe.webp", alt: "Lattafa Pride Art of Universe" },
+  { src: "/hero/hero-3-now-women.webp", alt: "Rave Now Women" },
 ];
 
 const ROTATE_INTERVAL_MS = 4500;
@@ -18,6 +18,11 @@ export function Hero() {
   const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    if (prefersReducedMotion) return;
+
     const interval = setInterval(() => {
       setActive((i) => (i + 1) % HERO_IMAGES.length);
     }, ROTATE_INTERVAL_MS);
@@ -38,7 +43,7 @@ export function Hero() {
   }
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-6">
+    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-6">
       <div className="relative z-10 mb-10 max-w-xl text-center">
         <h1 className="font-heading text-4xl italic tracking-tight text-foreground sm:text-6xl">
           A&G
@@ -55,8 +60,6 @@ export function Hero() {
         className="relative flex h-[50vh] w-full max-w-md items-center justify-center"
         style={{
           perspective: "1000px",
-          backgroundImage:
-            "radial-gradient(circle at center, transparent 35%, var(--background) 85%)",
         }}
       >
         {HERO_IMAGES.map((image, i) => (
@@ -79,11 +82,11 @@ export function Hero() {
               fill
               sizes="(min-width: 768px) 28rem, 90vw"
               priority={i === 0}
-              className="object-contain brightness-90 drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)]"
+              className="object-contain brightness-90"
             />
           </div>
         ))}
       </div>
-    </section>
+    </main>
   );
 }

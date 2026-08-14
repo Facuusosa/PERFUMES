@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Keep even though this brand never sets a .dark class: Tailwind v4 defaults the `dark:`
+   variant to prefers-color-scheme, and src/components/ui/button.tsx still uses dark:
+   classes. Removing this would make those fire unstyled for OS-dark-mode visitors. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
