@@ -11,7 +11,8 @@ Ecommerce de reventa de perfumes en Argentina. La dueña (nuestra clienta) compr
 Click en "comprar" → checkout con Mercado Pago. Sin fricción, sin registro obligatorio.
 
 ## Estado del contenido (importante para Claude Code)
-- Nombre de marca: **placeholder "Perfumes"** — no está definido, cambiar antes de producción.
+- Nombre de marca: **A&G (Ariel y Gisela)** — definido con la clienta (2026-08-14). Provisional:
+  si más adelante prefiere otro nombre, se re-evalúa y se avisa antes de asumirlo en código.
 - Fotos de producto: **no hay fotos reales todavía**, se usan Unsplash/Pexels como placeholder. Swap obligatorio antes de lanzar (derechos de autor).
 - Categorías: árabes/inspirados, Natura, nicho.
 

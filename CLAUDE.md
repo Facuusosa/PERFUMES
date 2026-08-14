@@ -12,7 +12,8 @@ Contexto completo: @docs/PRODUCT.md y @docs/DESIGN.md
 - Nunca: gradiente purple→blue/pink, glassmorphism, cards genéricas con sombra,
   bounce/elastic easing, Inter como fuente, system-ui visible.
 - Tipografía: Fraunces (display/serif) + Space Grotesk (UI). Paleta en @docs/DESIGN.md.
-- El nombre de marca es placeholder "Perfumes" — no asumir que es el nombre final.
+- El nombre de marca es **A&G (Ariel y Gisela)**, definido con la clienta (2026-08-14).
+  Si más adelante piden cambiarlo, actualizar este archivo antes de asumir un nombre nuevo.
 - Las fotos de producto son placeholder (stock, sin derechos) hasta definir qué pasa
   con las fotos generadas por IA de la clienta.
 

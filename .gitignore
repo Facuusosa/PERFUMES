@@ -49,3 +49,8 @@ next-env.d.ts
 # Claude Code — archivos locales, no compartidos por git
 .claude/settings.local.json
 CLAUDE.local.md
+.claude/worktrees/
+
+# fotos crudas de la clienta (sin curar, no son assets finales)
+/fotos-clienta
+.gstack/

@@ -25,6 +25,7 @@ Sacada de tono de vidrio/ámbar de frasco de perfume, no de un generador de pale
 ## Referencias (por qué las elegimos)
 - **[Ciao Energy](https://www.ciaoenergy.com/)** — loader cinemático, producto como pieza gráfica central, reveal de comparación, riel de navegación lateral. Hecho por el estudio SKAALD (Paris).
 - **Portfolio SKAALD**: [Lithosquare](https://www.skaald.com/projects/lithosquare), [Ovni](https://www.skaald.com/projects/ovni), [Efficiant](https://www.skaald.com/projects/efficiant) — mismo nivel de producción, más ejemplos del mismo estudio.
+- **[Nothin' (noth.in)](https://www.noth.in/#works)** — estudio creativo de París. Referencia clave para el hero: objetos flotando en fondo negro absoluto con iluminación de render (metal, foil, texturas), sin foto de producto "de catálogo" visible. Confirma el approach de imagen tratada + parallax/tilt en CSS en vez de WebGL real-time — el look de "render 3D" se logra con la imagen en sí (buena iluminación, fondo removido), no con un motor 3D en el navegador.
 - **Apple (AirPods Pro, product pages)** — el estándar del mecanismo "producto reacciona al scroll": canvas fijo reproduciendo una secuencia de imágenes atada al scroll.
 - **Awwwards**: [scroll-driven storytelling](https://www.awwwards.com/inspiration/scroll-driven-storytelling-synapser-studio), [canvas parallax](https://www.awwwards.com/inspiration/scroll-driven-narrative-with-canvas-parallax-dire-watt).
 
