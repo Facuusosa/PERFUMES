@@ -51,6 +51,19 @@
   animation: product-float 6s ease-in-out infinite;
 }
 
+@keyframes card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+/* Solo mobile/tablet chico: en desktop el hover ya da esa sensación de movimiento. */
+@media (max-width: 767px) {
+  .animate-card-float {
+    animation: card-float 3.2s ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+  }
+}
+
 @keyframes backdrop-pop {
   from { opacity: 0; backdrop-filter: blur(0); }
   to { opacity: 1; backdrop-filter: blur(8px); }
