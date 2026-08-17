@@ -13,12 +13,9 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
+# vite
+/dist
+vite.config.ts.timestamp-*
 
 # misc
 .DS_Store
@@ -30,21 +27,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (Supabase URL/anon key van acá, no se comitean)
 .env*
-
-# vercel
-.vercel
-
-# sanity
-.sanity
-
-# netlify
-.netlify
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # Claude Code — archivos locales, no compartidos por git
 .claude/settings.local.json

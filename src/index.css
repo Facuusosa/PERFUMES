@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-22px) rotate(1.5deg); }
+}
+
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+
+@keyframes bubble-in {
+  0% { opacity: 0; transform: scale(.4); border-radius: 50%; }
+  55% { opacity: 1; transform: scale(1.04); border-radius: 28px; }
+  100% { opacity: 1; transform: scale(1); border-radius: 24px; }
+}
+
+.animate-bubble-in {
+  animation: bubble-in .55s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+@keyframes bubble-out {
+  0% { opacity: 1; transform: scale(1); border-radius: 24px; }
+  100% { opacity: 0; transform: scale(.3); border-radius: 50%; }
+}
+
+.animate-bubble-out {
+  animation: bubble-out .35s ease-in both;
+}
+
+@keyframes product-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-14px) rotate(1.5deg); }
+}
+
+.animate-product-float {
+  animation: product-float 6s ease-in-out infinite;
+}
+
+@keyframes backdrop-pop {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to { opacity: 1; backdrop-filter: blur(8px); }
+}
+
+.animate-backdrop-pop {
+  animation: backdrop-pop .4s ease-out both;
+}
+
+@keyframes story-image {
+  from { opacity: 0; transform: scale(.97) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-story-image {
+  animation: story-image .7s ease-out both;
+}
+
+@keyframes story-text {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-story-text {
+  animation: story-text .6s ease-out both;
+  animation-delay: .12s;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee {
+  animation: marquee 22s linear infinite;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 149, 88, 0.4);
+  border-radius: 4px;
+}
