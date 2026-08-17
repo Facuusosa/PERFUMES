@@ -184,8 +184,8 @@ function App() {
 
       <main>
         <section id="inicio" className="relative flex min-h-[640px] items-end overflow-hidden bg-[#080909] px-6 pb-8 pt-28 md:min-h-screen md:px-12 md:pb-20 md:pt-32">
-          <div className="absolute inset-0 scale-125 md:hidden" style={{ backgroundImage: 'url(/images/perfumes/art-of-universe.png)', backgroundSize: 'cover', backgroundPosition: '70% center', filter: 'blur(50px) brightness(.4) saturate(1.3)' }} aria-hidden="true" />
-          <video className="absolute inset-x-0 top-0 h-[56%] w-full object-cover object-[70%_center] md:inset-0 md:h-full" autoPlay muted loop playsInline poster="/images/perfumes/art-of-universe.png" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1786922221/Perfume_bottle_in_dark_water_202608162003.mp4" type="video/mp4" /></video>
+          <video className="absolute inset-0 hidden h-full w-full object-cover object-[70%_center] md:block" autoPlay muted loop playsInline poster="/images/perfumes/art-of-universe.png" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1786922221/Perfume_bottle_in_dark_water_202608162003.mp4" type="video/mp4" /></video>
+          <video className="absolute inset-0 h-full w-full object-cover object-center md:hidden" autoPlay muted loop playsInline poster="/images/perfumes/art-of-universe.png" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1787003949/Perfume_bottle_in_dark_water_202608171858.mp4" type="video/mp4" /></video>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b0a08 0%, rgba(11,10,8,0.92) 25%, rgba(11,10,8,0.55) 45%, rgba(11,10,8,0) 65%)' }} />
           <div className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-[#0b0b0a] via-[#0b0b0a]/70 to-transparent md:h-40 md:via-transparent" />
           <div className="relative z-10 mx-auto w-full max-w-[1440px]">
