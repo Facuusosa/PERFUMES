@@ -14,11 +14,16 @@
 - Cada perfume tiene su propio color de acento en el catálogo (`accent` por producto en
   `App.tsx`), mismo espíritu que la regla vieja de "no tocar el color real del producto".
 - Tipografía: **Inter** (UI/cuerpo) + **Playfair Display** (serif/display, clase `.font-serif`).
-  Esto contradice la regla vieja "nunca Inter, Fraunces + Space Grotesk" — queda así hasta
-  que se decida explícitamente volver a cambiarlo.
+  Contradice la regla vieja "nunca Inter, Fraunces + Space Grotesk", pero Facu confirmó
+  explícitamente (2026-08-17) que la deja así por ahora — no es un olvido, es decisión
+  tomada. Si más adelante se quiere retomar Fraunces/Space Grotesk, es un pedido nuevo.
+- El modal de detalle de producto abre/cierra con un rebote (`cubic-bezier(.34, 1.56, .64, 1)`
+  en `bubble-in`/`bubble-out`, `src/index.css`). Contradice la regla vieja "nunca
+  bounce/elastic easing", pero también fue confirmado como intencional (2026-08-17).
+- Ambos hallazgos están silenciados en `.impeccable/config.json` (`ignoreValues`) para que
+  el hook de diseño no los vuelva a marcar.
 
 ## Pendiente de decidir con Facu
-- Si se retoma la tipografía Fraunces/Space Grotesk sobre este nuevo código, o se deja Inter/Playfair.
 - Si vale la pena traer el mecanismo de Light Rays del hero viejo (rama de backup) a esta base.
 - Hosting y dominio: no se volvieron a evaluar bajo el stack Vite/Supabase.
 
