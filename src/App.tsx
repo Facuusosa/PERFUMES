@@ -184,7 +184,7 @@ function App() {
 
       <main>
         <section id="inicio" className="relative flex min-h-[760px] items-end overflow-hidden bg-[#080909] px-6 pb-14 pt-32 md:min-h-screen md:px-12 md:pb-20">
-          <video className="absolute inset-0 h-full w-full scale-75 object-cover object-[70%_center] transition-transform duration-500 md:scale-100" autoPlay muted loop playsInline poster="/images/perfumes/art-of-universe.png" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1786922221/Perfume_bottle_in_dark_water_202608162003.mp4" type="video/mp4" /></video>
+          <video className="absolute inset-x-0 top-1/2 aspect-video w-full -translate-y-1/2 object-cover object-[70%_center] md:inset-0 md:top-0 md:aspect-auto md:h-full md:translate-y-0" autoPlay muted loop playsInline poster="/images/perfumes/art-of-universe.png" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1786922221/Perfume_bottle_in_dark_water_202608162003.mp4" type="video/mp4" /></video>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b0a08 0%, rgba(11,10,8,0.92) 25%, rgba(11,10,8,0.55) 45%, rgba(11,10,8,0) 65%)' }} />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0b0b0a] to-transparent" />
           <div className="relative z-10 mx-auto w-full max-w-[1440px]">
