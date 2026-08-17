@@ -27,6 +27,12 @@ Sacada de tono de vidrio/ámbar de frasco de perfume, no de un generador de pale
 - Bounce/elastic easing
 - Íconos que no sean intencionales (nada de clipart)
 
+**Excepción puntual (2026-08-15):** el hero tiene un backlight ámbar (`--accent`)
+muy sutil, tipo luz de estudio fotográfico, detrás del producto — técnicamente un
+"glow" pero acotado a ese único lugar, a intensidad mínima (no debe leerse como
+protagonista ni distraer de la foto). No es luz verde para usar glow en otras
+partes del sitio; cualquier otro uso se evalúa caso a caso.
+
 ## Referencias (por qué las elegimos)
 - **[Ciao Energy](https://www.ciaoenergy.com/)** — loader cinemático, producto como pieza gráfica central, reveal de comparación, riel de navegación lateral. Hecho por el estudio SKAALD (Paris).
 - **Portfolio SKAALD**: [Lithosquare](https://www.skaald.com/projects/lithosquare), [Ovni](https://www.skaald.com/projects/ovni), [Efficiant](https://www.skaald.com/projects/efficiant) — mismo nivel de producción, más ejemplos del mismo estudio.
