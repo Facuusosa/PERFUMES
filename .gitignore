@@ -41,3 +41,9 @@ CLAUDE.local.md
 # fotos crudas de la clienta (sin curar, no son assets finales)
 /fotos-clienta
 .gstack/
+
+# Local Netlify folder
+.netlify
+
+# Supabase CLI local cache
+/supabase/.temp
