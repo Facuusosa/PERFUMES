@@ -47,3 +47,6 @@ CLAUDE.local.md
 
 # Supabase CLI local cache
 /supabase/.temp
+
+# Claude Code — estado local de la skill de brainstorming
+/.superpowers
