@@ -3,6 +3,7 @@ import {
   ArrowDown,
   ArrowRight,
   Check,
+  ChevronDown,
   Instagram,
   Menu,
   MessageCircle,
@@ -104,12 +105,28 @@ const categoryMeta: { value: ProductCategory; label: string }[] = [
   { value: "Victoria's Secret", label: "Victoria's Secret" },
 ];
 
+const LETTER_STAGGER = 0.028;
+
+// Anima el texto letra por letra al montar; baseDelay retrasa el arranque de la segunda
+// linea (con leve solape entre ambas, no secuencia estricta). aria-hidden porque el
+// texto real y accesible va en el aria-label del <h1> que envuelve a este componente.
+const AnimatedLetters = ({ text, baseDelay = 0 }: { text: string; baseDelay?: number }) => (
+  <span aria-hidden="true">
+    {text.split('').map((char, index) => (
+      <span key={index} className="animate-letter-drop inline-block" style={{ animationDelay: `${baseDelay + index * LETTER_STAGGER}s` }}>
+        {char === ' ' ? ' ' : char}
+      </span>
+    ))}
+  </span>
+);
+
 function App() {
   const [perfumes, setPerfumes] = useState<Perfume[]>(fallbackPerfumes);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCollectionMenuOpen, setIsCollectionMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState<ProductCategory>('Perfume');
   const [activeFamily, setActiveFamily] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,23 +164,44 @@ function App() {
     return () => window.clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 60);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const perfumeOnly = useMemo(() => perfumes.filter((perfume) => getCategory(perfume) === 'Perfume'), [perfumes]);
   const families = useMemo(() => ['Todos', ...Array.from(new Set(perfumeOnly.map((perfume) => perfume.family)))], [perfumeOnly]);
   const macroFamilyNames = useMemo(() => familyMeta.map((meta) => meta.name), []);
   const familySlides = useMemo(() => familyMeta.map((meta) => {
     const members = perfumeOnly.filter((perfume) => getMacroFamily(perfume.family) === meta.name);
-    const representative = members[0];
-    return { ...meta, count: members.length, image: representative?.image, note: representative?.family ?? meta.line };
+    return { ...meta, count: members.length, images: members.map((member) => member.image) };
   }), [perfumeOnly]);
+  const [familyImageIndex, setFamilyImageIndex] = useState<number[]>(() => familyMeta.map(() => 0));
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    const interval = window.setInterval(() => {
+      setFamilyImageIndex((current) => current.map((index, slideIndex) => {
+        const count = familySlides[slideIndex]?.images.length ?? 0;
+        if (count <= 1) return index;
+        let next = Math.floor(Math.random() * count);
+        while (next === index) next = Math.floor(Math.random() * count);
+        return next;
+      }));
+    }, 3200);
+    return () => window.clearInterval(interval);
+  }, [familySlides]);
   const priceBounds = useMemo<[number, number]>(() => {
     if (perfumes.length === 0) return [0, 0];
     const prices = perfumes.map((perfume) => perfume.price);
     return [Math.min(...prices), Math.max(...prices)];
   }, [perfumes]);
   const effectivePriceRange = priceRange ?? priceBounds;
+  const isSearching = searchQuery.trim().length > 0;
   const visiblePerfumes = perfumes
-    .filter((perfume) => getCategory(perfume) === activeCategory)
-    .filter((perfume) => activeCategory !== 'Perfume' || activeFamily === 'Todos' || (macroFamilyNames.includes(activeFamily) ? getMacroFamily(perfume.family) === activeFamily : perfume.family === activeFamily))
+    .filter((perfume) => isSearching || getCategory(perfume) === activeCategory)
+    .filter((perfume) => isSearching || activeCategory !== 'Perfume' || activeFamily === 'Todos' || (macroFamilyNames.includes(activeFamily) ? getMacroFamily(perfume.family) === activeFamily : perfume.family === activeFamily))
     .filter((perfume) => perfume.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
     .filter((perfume) => perfume.price >= effectivePriceRange[0] && perfume.price <= effectivePriceRange[1]);
   const CATALOG_PAGE_SIZE = 12;
@@ -281,13 +319,13 @@ function App() {
   return (
     <div className="min-h-screen bg-[#0b0b0a] text-[#f2eee7] selection:bg-[#c99558] selection:text-black">
       <header className="fixed inset-x-0 top-0 z-40 px-5 py-5 md:px-10">
-        <nav className="mx-auto flex max-w-[1440px] items-center justify-between rounded-full border border-white/15 bg-black/25 px-5 py-3 backdrop-blur-md">
+        <nav className={`mx-auto flex max-w-[1440px] items-center justify-between rounded-full border px-5 py-3 backdrop-blur-md transition-colors duration-300 ${isScrolled ? 'border-white/10 bg-[#0b0b0a]/90' : 'border-white/15 bg-black/25'}`}>
           <a href="#inicio" className="font-serif text-xl tracking-[-0.04em]">A&G <span className="text-[#c99558]">Gisela</span></a>
           <div className="hidden items-center gap-8 text-[11px] uppercase tracking-[0.22em] text-white/65 md:flex">
             <a href="#inicio" className="transition hover:text-white">Inicio</a>
             <div className="relative">
-              <button onClick={() => setIsCollectionMenuOpen((open) => !open)} aria-haspopup="true" aria-expanded={isCollectionMenuOpen} className="transition hover:text-white">Colección</button>
-              {isCollectionMenuOpen && <div className="absolute left-1/2 top-full z-50 mt-4 w-52 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/15 bg-[#151412]/95 p-1.5 normal-case tracking-normal shadow-2xl backdrop-blur-md">{categoryMeta.map((meta) => <button key={meta.value} onClick={() => goToCategory(meta.value)} className={`block w-full rounded-xl px-4 py-2.5 text-left text-xs transition hover:bg-white/10 ${activeCategory === meta.value ? 'text-[#c99558]' : 'text-white/80'}`}>{meta.label}</button>)}</div>}
+              <button onClick={() => setIsCollectionMenuOpen((open) => !open)} aria-haspopup="true" aria-expanded={isCollectionMenuOpen} className="flex items-center gap-1.5 uppercase tracking-[0.22em] transition hover:text-white">Colección <ChevronDown size={12} className={`transition-transform ${isCollectionMenuOpen ? 'rotate-180' : ''}`} /></button>
+              {isCollectionMenuOpen && <div className="animate-dropdown-in absolute left-1/2 top-full z-50 mt-4 w-52 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/15 bg-[#151412]/95 p-1.5 normal-case tracking-normal shadow-2xl backdrop-blur-md">{categoryMeta.map((meta) => <button key={meta.value} onClick={() => goToCategory(meta.value)} className={`block w-full rounded-xl px-4 py-2.5 text-left text-xs transition hover:bg-white/10 ${activeCategory === meta.value ? 'text-[#c99558]' : 'text-white/80'}`}>{meta.label}</button>)}</div>}
             </div>
             <a href="#historia" className="transition hover:text-white">Nosotros</a><a href="#contacto" className="transition hover:text-white">Contacto</a>
           </div>
@@ -311,7 +349,7 @@ function App() {
           <div className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-[#0b0b0a] via-[#0b0b0a]/70 to-transparent md:h-40 md:via-transparent" />
           <div className="relative z-10 mx-auto w-full max-w-[1440px]">
             <div className="mb-6 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-[#c99558] sm:mb-12"><span className="h-px w-8 bg-[#c99558]" />Perfumería árabe · Envíos a todo el país</div>
-            <div className="max-w-3xl"><h1 className="font-serif text-[clamp(4.4rem,12vw,10rem)] leading-[.82] tracking-[-0.08em]">El aroma<br /><i className="font-light text-[#c99558]">te precede.</i></h1><div className="mt-6 flex flex-col gap-4 sm:mt-12 sm:flex-row sm:items-end sm:justify-between sm:gap-8"><p className="max-w-[270px] text-sm leading-6 text-white/65">Fragancias que dejan una impresión antes de que llegues. Descubrí tu próxima firma olfativa.</p><a href="#coleccion" className="group flex w-fit items-center gap-4 rounded-full bg-[#f2eee7] px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:bg-[#c99558]">Ver colección <ArrowRight size={15} className="transition group-hover:translate-x-1" /></a></div></div>
+            <div className="max-w-3xl"><h1 aria-label="El aroma te precede." className="font-serif text-[clamp(4.4rem,12vw,10rem)] leading-[.82] tracking-[-0.08em]"><AnimatedLetters text="El aroma" /><br /><i className="font-light text-[#c99558]"><AnimatedLetters text="te precede." baseDelay={8 * LETTER_STAGGER} /></i></h1><p className="mt-6 max-w-[270px] text-sm leading-6 text-white/65 sm:mt-12">Fragancias que dejan una impresión antes de que llegues. Descubrí tu próxima firma olfativa.</p><a href="#coleccion" className="group mt-6 inline-flex w-fit items-center gap-3 rounded-full border border-white/30 px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white transition hover:border-[#c99558] hover:text-[#c99558] sm:mt-8">Ver colección <ArrowRight size={14} className="transition group-hover:translate-x-1" /></a></div>
             <div className="mt-8 flex items-center justify-between border-t border-white/15 pt-5 text-[10px] uppercase tracking-[0.25em] text-white/40 sm:mt-16"><span>01 — Odyssey Limited</span><span className="flex items-center gap-2"><ArrowDown size={13} /> Deslizá para descubrir</span></div>
           </div>
         </section>
@@ -320,23 +358,23 @@ function App() {
 
         <section id="coleccion" className="bg-[#e9e5dd] px-5 py-20 text-[#151412] md:px-12 md:py-28">
           <div className="mx-auto max-w-[1440px]"><div className="mb-14 flex flex-col justify-between gap-8 md:flex-row md:items-end"><div><p className="mb-4 text-[10px] uppercase tracking-[0.3em] text-[#96724b]">La colección</p><h2 className="max-w-xl font-serif text-5xl leading-[.92] tracking-[-0.06em] md:text-7xl">Elegí la nota<br /><i className="font-light">que habla de vos.</i></h2></div><p className="max-w-xs text-sm leading-6 text-black/55">Cada perfume, una manera distinta de dejar huella. Diseñados para acompañarte, no para pasar desapercibidos.</p></div>
-            <div className="mb-8 flex gap-2 overflow-x-auto pb-2">{categoryMeta.map((meta) => <button key={meta.value} onClick={() => { setActiveCategory(meta.value); setActiveFamily('Todos'); setCatalogPage(1); }} className={`whitespace-nowrap rounded-full border px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.17em] transition ${activeCategory === meta.value ? 'border-[#151412] bg-[#151412] text-white' : 'border-black/20 text-black/55 hover:border-black/60'}`}>{meta.label}</button>)}</div>
-            <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="relative w-full sm:max-w-xs">
-                <Search size={15} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-black/35" />
-                <input type="text" value={searchQuery} onChange={(event) => { setSearchQuery(event.target.value); setCatalogPage(1); }} placeholder="Buscar por nombre..." className="w-full rounded-full border border-black/20 bg-white/60 py-2.5 pl-11 pr-4 text-xs text-black placeholder:text-black/35 outline-none transition focus:border-black/50" />
+            <div className="mb-8 flex flex-wrap items-start gap-x-8 gap-y-3">{categoryMeta.map((meta) => { const active = !isSearching && activeCategory === meta.value; return <button key={meta.value} onClick={() => { setActiveCategory(meta.value); setActiveFamily('Todos'); setCatalogPage(1); setSearchQuery(''); }} className="group pb-1.5"><span className={`font-serif text-2xl italic tracking-[-0.02em] transition sm:text-3xl ${active ? 'text-[#151412]' : 'text-black/35 group-hover:text-black/60'}`}>{meta.label}</span><span className={`mt-1.5 block h-[2px] w-full transition-colors ${active ? 'bg-[#c99558]' : 'bg-transparent'}`} /></button>; })}</div>
+            <div className="mb-8 flex flex-col divide-y divide-black/10 border-y border-black/10 sm:flex-row sm:divide-x sm:divide-y-0">
+              <div className="relative flex flex-1 items-center gap-3 py-4">
+                <Search size={15} className="shrink-0 text-black/35" />
+                <input type="text" value={searchQuery} onChange={(event) => { setSearchQuery(event.target.value); setCatalogPage(1); }} placeholder="Buscar por nombre..." className="w-full bg-transparent text-xs text-black placeholder:text-black/35 outline-none" />
               </div>
-              <div className="flex w-full flex-col gap-2 sm:w-72">
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.15em] text-black/55"><span>{formatPrice(effectivePriceRange[0])}</span><span>{formatPrice(effectivePriceRange[1])}</span></div>
+              <div className="flex flex-col gap-2 py-4 sm:w-72 sm:pl-8">
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.15em] text-black/55"><span>Precio</span><span className="text-black/80">{formatPrice(effectivePriceRange[0])} – {formatPrice(effectivePriceRange[1])}</span></div>
                 <div className="relative h-5">
                   <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-black/15" />
-                  <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-[#151412]" style={{ left: `${priceBounds[1] === priceBounds[0] ? 0 : ((effectivePriceRange[0] - priceBounds[0]) / (priceBounds[1] - priceBounds[0])) * 100}%`, right: `${priceBounds[1] === priceBounds[0] ? 0 : 100 - ((effectivePriceRange[1] - priceBounds[0]) / (priceBounds[1] - priceBounds[0])) * 100}%` }} />
+                  <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-[#c99558]" style={{ left: `${priceBounds[1] === priceBounds[0] ? 0 : ((effectivePriceRange[0] - priceBounds[0]) / (priceBounds[1] - priceBounds[0])) * 100}%`, right: `${priceBounds[1] === priceBounds[0] ? 0 : 100 - ((effectivePriceRange[1] - priceBounds[0]) / (priceBounds[1] - priceBounds[0])) * 100}%` }} />
                   <input type="range" aria-label="Precio mínimo" min={priceBounds[0]} max={priceBounds[1]} value={effectivePriceRange[0]} onChange={(event) => { const value = Number(event.target.value); setPriceRange([Math.min(value, effectivePriceRange[1]), effectivePriceRange[1]]); setCatalogPage(1); }} className="range-slider absolute inset-0 w-full" />
                   <input type="range" aria-label="Precio máximo" min={priceBounds[0]} max={priceBounds[1]} value={effectivePriceRange[1]} onChange={(event) => { const value = Number(event.target.value); setPriceRange([effectivePriceRange[0], Math.max(value, effectivePriceRange[0])]); setCatalogPage(1); }} className="range-slider absolute inset-0 w-full" />
                 </div>
               </div>
             </div>
-            {activeCategory === 'Perfume' && <div className="mb-12 flex gap-2 overflow-x-auto pb-2">{families.map((family) => <button key={family} onClick={() => setActiveFamilyAndResetPage(family)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.17em] transition ${activeFamily === family ? 'border-[#151412] bg-[#151412] text-white' : 'border-black/20 text-black/55 hover:border-black/60'}`}>{family}</button>)}</div>}
+            {activeCategory === 'Perfume' && !isSearching && <div className="mb-12 flex gap-2 overflow-x-auto pb-2">{families.map((family) => <button key={family} onClick={() => setActiveFamilyAndResetPage(family)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.17em] transition ${activeFamily === family ? 'border-[#c99558] bg-[#c99558] text-[#151412]' : 'border-black/20 text-black/55 hover:border-black/60'}`}>{family}</button>)}</div>}
             {paginatedPerfumes.length === 0 && <p className="mb-12 text-sm text-black/45">No encontramos productos con esos filtros. Probá ajustar la búsqueda, la categoría o el rango de precio.</p>}
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{paginatedPerfumes.map((perfume, index) => { const variants = getVariants(perfume); const selected = getSelectedVariant(perfume); return <article key={perfume.id} onClick={() => openProduct(perfume)} className="group relative min-h-[480px] cursor-pointer overflow-hidden p-7 text-white" style={{ background: `linear-gradient(145deg, ${perfume.accent}, #151515 120%)` }}><div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(255,255,255,.2),transparent_25%)] opacity-70" /><div className="relative z-10 flex h-full flex-col justify-between"><div className="flex justify-between text-[10px] uppercase tracking-[0.2em] text-white/65"><span>{String(index + 1).padStart(2, '0')} / {String(paginatedPerfumes.length).padStart(2, '0')}</span><span>{perfume.family}</span></div><div className="absolute left-1/2 top-1/2 h-[66%] w-[92%] -translate-x-1/2 -translate-y-1/2"><div className="h-full w-full animate-card-float" style={{ '--float-delay': `${(index % 3) * -1.1}s` } as CSSProperties}><img src={selected.image} alt={selected.name} className="h-full w-full object-contain drop-shadow-[0_28px_25px_rgba(0,0,0,.48)] transition duration-700 group-hover:scale-105 group-hover:-translate-y-[6%]" /></div></div><div className="relative mt-auto"><p className="mb-2 text-xs text-white/65">{selected.notes}</p><h3 className="font-serif text-3xl tracking-[-0.04em]">{perfume.name}</h3>{variants.length > 1 && <div onClick={(event) => event.stopPropagation()} className="mt-3 flex flex-wrap gap-1.5">{variants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariantId((current) => ({ ...current, [perfume.id]: variant.id }))} className={`rounded-full border px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] transition ${selected.id === variant.id ? 'border-white bg-white/20 text-white' : 'border-white/25 text-white/55 hover:border-white/50'}`}>{variant.name}</button>)}</div>}<div className="mt-5 flex items-center justify-between border-t border-white/20 pt-4"><span className="text-sm">{formatPrice(perfume.price)}</span><button onClick={(event) => quickAdd(event, perfume)} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] transition hover:text-[#f2c891]"><Plus size={15} /> Agregar</button></div></div></div></article>; })}</div>
             {catalogTotalPages > 1 && <div className="mt-12 flex items-center justify-center gap-6">
@@ -347,7 +385,7 @@ function App() {
           </div>
         </section>
 
-        <section className="bg-[#0b0b0a] px-5 py-20 md:px-12 md:py-28"><div className="mx-auto grid max-w-[1440px] gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-center"><div><p className="mb-4 text-[10px] uppercase tracking-[0.3em] text-[#c99558]">Encontrá tu familia</p><h2 className="font-serif text-5xl leading-[.92] tracking-[-0.06em] md:text-7xl">Una emoción<br /><i className="text-[#c99558]">en cada nota.</i></h2><p className="mt-8 max-w-xs text-sm leading-6 text-white/45">Cada familia cambia de voz, de textura y de energía. Dejá que el próximo aroma te encuentre.</p></div><div className="flex flex-col">{familySlides.map((family, index) => <article key={family.name} onClick={() => { setActiveCategory('Perfume'); setActiveFamilyAndResetPage(family.name); document.getElementById('coleccion')?.scrollIntoView({ behavior: 'smooth' }); }} className="group flex cursor-pointer items-center justify-between gap-6 border-t border-white/10 py-6 transition first:border-t-0 md:py-8"><div><div className="flex items-center gap-3 text-white/35"><Sparkles size={14} /><span className="text-[9px] uppercase tracking-[0.2em]">0{index + 1} / 04</span></div><h3 className="mt-2 font-serif text-4xl tracking-[-0.03em] text-white/55 transition group-hover:text-[#c99558] md:text-5xl"><i className="not-italic font-light group-hover:italic">{family.name}</i></h3><p className="mt-2 max-w-xs text-xs leading-5 text-white/40">{family.line}</p><p className="mt-3 text-[9px] uppercase tracking-[0.16em] text-[#c99558]">{family.count} {family.count === 1 ? 'perfume' : 'perfumes'}</p></div>{family.image && <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full opacity-40 transition duration-500 group-hover:scale-125 group-hover:opacity-100 md:h-28 md:w-28"><img src={family.image} alt="" className="h-full w-full object-contain" /></div>}</article>)}</div></div></section>
+        <section className="bg-[#0b0b0a] px-5 py-20 md:px-12 md:py-28"><div className="mx-auto grid max-w-[1440px] gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-center"><div><p className="mb-4 text-[10px] uppercase tracking-[0.3em] text-[#c99558]">Encontrá tu familia</p><h2 className="font-serif text-5xl leading-[.92] tracking-[-0.06em] md:text-7xl">Una emoción<br /><i className="text-[#c99558]">en cada nota.</i></h2><p className="mt-8 max-w-xs text-sm leading-6 text-white/45">Cada familia cambia de voz, de textura y de energía. Dejá que el próximo aroma te encuentre.</p></div><div className="flex flex-col">{familySlides.map((family, index) => <article key={family.name} onClick={() => { setActiveCategory('Perfume'); setActiveFamilyAndResetPage(family.name); document.getElementById('coleccion')?.scrollIntoView({ behavior: 'smooth' }); }} className="group flex cursor-pointer items-center justify-between gap-6 border-t border-white/10 py-6 transition first:border-t-0 md:py-8"><div><div className="flex items-center gap-3 text-white/35"><Sparkles size={14} /><span className="text-[9px] uppercase tracking-[0.2em]">0{index + 1} / 04</span></div><h3 className="mt-2 font-serif text-4xl tracking-[-0.03em] text-white/55 transition group-hover:text-[#c99558] md:text-5xl"><i className="not-italic font-light group-hover:italic">{family.name}</i></h3><p className="mt-2 max-w-xs text-xs leading-5 text-white/40">{family.line}</p><p className="mt-3 text-[9px] uppercase tracking-[0.16em] text-[#c99558]">{family.count} {family.count === 1 ? 'perfume' : 'perfumes'}</p></div>{family.images.length > 0 && <div className="relative h-32 w-32 shrink-0 opacity-60 transition duration-500 group-hover:scale-110 group-hover:opacity-100 md:h-48 md:w-48"><img key={family.images[familyImageIndex[index]]} src={family.images[familyImageIndex[index]]} alt="" className="h-full w-full object-contain animate-story-image" /></div>}</article>)}</div></div></section>
 
         <section id="historia" className="relative overflow-hidden transition-colors duration-700 md:min-h-[820px]" style={{ backgroundColor: storySlides[storyImageIndex].bg }}>
           <div className="absolute inset-x-0 top-0 z-10 h-1" style={{ backgroundColor: storySlides[storyImageIndex].accent }} />
