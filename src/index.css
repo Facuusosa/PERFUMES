@@ -120,6 +120,24 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-bubble-in,
+  .animate-bubble-out,
+  .animate-product-float,
+  .animate-card-float,
+  .animate-backdrop-pop,
+  .animate-story-image,
+  .animate-story-text,
+  .animate-toast-in,
+  .marquee {
+    animation: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
