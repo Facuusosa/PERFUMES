@@ -22,7 +22,10 @@ retoma algo de ahí (Light Rays, tipografía Fraunces/Space Grotesk, mecanismos 
   no resuelta por este reemplazo.
 - **Checkout por WhatsApp** (arma el mensaje con el pedido y el precio, no hay Mercado Pago
   integrado en este código). Revisar con Facu si esto es definitivo o intermedio.
-- Sin hosting configurado todavía en este repo (la decisión anterior era Netlify).
+- **Hosting: Netlify, decisión cerrada** (ya hay `netlify.toml` en el repo, deploy real
+  pendiente de ejecutar). No evaluar Vercel para este proyecto: su plan gratuito prohíbe
+  ecommerce/checkout explícitamente (Acceptable Use Policy, verificado 2026-08-23), habría
+  que pagar el plan Pro (USD 20/mes). Netlify sí permite ecommerce en su plan free.
 
 ## Contradicciones con `docs/DESIGN.md` heredado (a resolver, no ignorar)
 El código trae **Inter + Playfair Display** y colores propios (`#0b0b0a`, acento `#c99558`),
