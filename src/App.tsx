@@ -234,6 +234,17 @@ function App() {
     setIsCartOpen(true);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (selectedProduct) { closeProduct(); return; }
+      if (isCartOpen) { setIsCartOpen(false); return; }
+      if (isMenuOpen) setIsMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedProduct, isCartOpen, isMenuOpen]);
+
   return (
     <div className="min-h-screen bg-[#0b0b0a] text-[#f2eee7] selection:bg-[#c99558] selection:text-black">
       <header className="fixed inset-x-0 top-0 z-40 px-5 py-5 md:px-10">
