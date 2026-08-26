@@ -15,18 +15,18 @@ import {
   Truck,
   X,
 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from './lib/supabaseClient';
 
-type Variant = {
+export type Variant = {
   id: string;
   name: string;
   notes: string;
   image: string;
 };
 
-type ProductCategory = 'Perfume' | 'Combo' | "Victoria's Secret";
+export type ProductCategory = 'Perfume' | 'Combo' | "Victoria's Secret";
 
-type Perfume = {
+export type Perfume = {
   id: string;
   name: string;
   subtitle: string;
@@ -64,9 +64,6 @@ const fallbackPerfumes: Perfume[] = [
   { id: 'now-women', name: 'Now Women', subtitle: 'Frutal · contemporáneo', family: 'Floral frutal', notes: 'Pera · peonía · vainilla', price: 38000, volume: '100 ml', accent: '#b78686', image: '/images/perfumes/now-women.png', description: 'Un aroma amable y moderno, con flores delicadas y una dulzura que queda cerca de la piel.', category: 'Perfume' },
 ];
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 const formatPrice = (price: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(price);
 const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
