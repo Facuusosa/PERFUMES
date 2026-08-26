@@ -81,6 +81,18 @@ No existe pantalla de registro. El usuario de la clienta lo crea Facu una única
 dashboard de Supabase (Authentication → Add user) y le pasa usuario/contraseña por fuera del
 sitio.
 
+**Corrección tras revisión antagónica (2026-08-26):** `netlify.toml` hoy no define ningún
+redirect — Netlify sirve archivos estáticos y no sabe que `/admin` debe resolver a la SPA. Sin
+esto, `/admin` funcionaría en desarrollo (Vite hace SPA-fallback solo) pero devolvería 404 en
+producción apenas alguien refresque la página o entre por link directo. Este spec incluye
+agregar a `netlify.toml`:
+```toml
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
 ### 2. Seguridad — nueva migración RLS + Storage
 
 Nueva migración que reemplaza las políticas de escritura de `public.perfumes`:
@@ -91,6 +103,16 @@ Nueva migración que reemplaza las políticas de escritura de `public.perfumes`:
 Se crea un bucket de Supabase Storage (`product-images`): lectura pública (para que las fotos
 carguen en la tienda sin login), escritura (subir/borrar) restringida a `authenticated`.
 
+**Corrección tras revisión antagónica (2026-08-26):** restringir a `authenticated` no alcanza
+por sí solo. Por default, Supabase permite que cualquier visitante se cree una cuenta con
+`supabase.auth.signUp()` desde la consola del navegador (la anon key ya está expuesta en el
+bundle) — esa cuenta autocreada también sería `authenticated`, y el agujero de seguridad se
+reubicaría en vez de cerrarse. Paso obligatorio, sin código: desde el dashboard de Supabase,
+Authentication → Providers → Email, desactivar "Allow new users to sign up". Con el registro
+público apagado, solo la cuenta que Facu crea a mano puede autenticarse, y recién ahí la
+restricción a `authenticated` cierra el agujero de verdad — tanto en la tabla `perfumes` como
+en el bucket `product-images`.
+
 ### 3. Dashboard — lista + alta/edición + baja
 
 - Lista de productos: miniatura, nombre, categoría, precio, botones "Editar" / "Eliminar" por
@@ -99,13 +121,28 @@ carguen en la tienda sin login), escritura (subir/borrar) restringida a `authent
   categoría (select: Perfume / Combo / Victoria's Secret), familia olfativa, notas, precio
   (ARS, entero > 0), volumen, descripción, foto (`<input type="file">`, sube al bucket al
   guardar y persiste la URL pública resultante en `image`), y color de acento
-  (`<input type="color">` con ayuda visible: "elegí el tono que más se parece al frasco").
+  (`<input type="color">` con ayuda visible: "elegí el tono que más se parece al frasco"), con
+  una vista previa en vivo de cómo queda la tarjeta del producto con ese color — así la clienta
+  ve el resultado antes de guardar, en vez de tener que adivinar si combina.
+- **Corrección tras revisión antagónica (2026-08-26) — formulario condicional por categoría:**
+  `family` y `notes` son columnas `NOT NULL` en la tabla (`20260815220935_create_perfume_catalog.sql`),
+  pero solo tienen sentido real para la categoría Perfume — pedirle "familia olfativa" a una
+  bruma de Victoria's Secret o al combo Karseell confunde a la clienta. El formulario oculta
+  esos dos campos cuando la categoría no es "Perfume" y completa esas columnas automáticamente
+  con un valor fijo neutro (ej. igual al `subtitle`), transparente para la clienta.
 - Alta: se genera un `id` slug a partir del nombre, verificando que no colisione con uno
-  existente antes del INSERT.
+  existente antes del INSERT; si colisiona, se muestra un error pidiendo ajustar el nombre (no
+  se genera un sufijo automático silencioso).
+- **Corrección tras revisión antagónica (2026-08-26) — el id nunca cambia después de creado:**
+  el `id` es la primary key y la referencia usada por el carrito. Editar el nombre de un
+  producto existente actualiza `name` pero nunca regenera ni modifica su `id` — evita romper
+  referencias silenciosamente.
 - Edición: si se reemplaza la foto, se sube la nueva y se actualiza `image`; si no se toca, se
   conserva la existente.
 - Eliminar: modal de confirmación ("¿Seguro que querés eliminar [nombre]? No se puede
-  deshacer") antes del DELETE.
+  deshacer") antes del DELETE. **Corrección tras revisión antagónica (2026-08-26):** al
+  confirmar, además del DELETE en la tabla se borra del bucket la imagen asociada al producto,
+  para no acumular archivos huérfanos.
 
 ### 4. Validación y errores
 
