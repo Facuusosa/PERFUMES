@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import Login from './Login';
+import Dashboard from './Dashboard';
 
 function AdminApp() {
   const [session, setSession] = useState<Session | null>(null);
@@ -39,11 +40,7 @@ function AdminApp() {
     return <Login />;
   }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0b0b0a] text-[#f2eee7]">
-      Sesión iniciada. Panel en construcción (Task 6).
-    </div>
-  );
+  return <Dashboard onLogout={() => supabase?.auth.signOut()} />;
 }
 
 export default AdminApp;
