@@ -1,4 +1,4 @@
-# ecommerce-perfumes (A&G Gisela)
+# ecommerce-perfumes (A&G Perfumes)
 
 Ecommerce de reventa de perfumes multimarca en Argentina.
 Contexto completo: @docs/PRODUCT.md y @docs/DESIGN.md
@@ -33,8 +33,9 @@ mientras que `DESIGN.md` decía "nunca Inter" y Fraunces + Space Grotesk. `docs/
 se actualizó para describir el estado real; si en algún momento se quiere volver a la
 tipografía/paleta anterior, es una decisión a tomar con Facu, no a aplicar de oficio.
 
-- El nombre de marca es **A&G (Ariel y Gisela)** — en este código aparece como "A&G Gisela".
-  Si cambia, actualizar este archivo antes de asumir un nombre nuevo.
+- El nombre de marca es **A&G Perfumes** (cambiado de "A&G Gisela" el 2026-08-26, a pedido
+  de Facu — el sitio se va a llamar `aygperfumes`). Los socios siguen siendo Ariel y Gisela;
+  solo cambió el nombre visible de marca/dominio.
 - Las fotos de producto (`public/images/perfumes/`) ya son de los perfumes reales que la
   clienta vende (no placeholders de stock genérico como antes).
 

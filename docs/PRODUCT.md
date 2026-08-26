@@ -35,20 +35,36 @@ datos: campo `category` en la tabla `perfumes` de Supabase (migración
 ## Objetivo de conversión
 Click en "agregar al carrito" → arma el pedido → **checkout por WhatsApp** (el código actual
 arma un mensaje con el detalle del pedido y lo abre en WhatsApp; no hay Mercado Pago
-integrado). Revisar con la clienta/Facu si esto es el flujo definitivo o un paso intermedio
-hasta integrar cobro online.
+integrado). **Decisión definitiva (Facu, 2026-08-26):** este es el flujo final, no un paso
+intermedio — se descarta integrar cobro online a propósito para evitar los costos de Mercado
+Pago (comisión por transacción). Pendiente: probar el flujo completo (mensaje armado, apertura
+de WhatsApp) en mobile y desktop antes de dar el sitio por terminado.
 
 ## Estado del contenido (importante para Claude Code)
-- Nombre de marca: **A&G (Ariel y Gisela)** — definido con la clienta (2026-08-14). En el
-  código actual aparece como "A&G Gisela". Provisional: si más adelante prefiere otro nombre,
-  se re-evalúa y se avisa antes de asumirlo en código.
+- Nombre de marca: **A&G Perfumes** (cambiado de "A&G Gisela" el 2026-08-26, a pedido de
+  Facu — el sitio se va a llamar `aygperfumes`). Los socios siguen siendo Ariel y Gisela,
+  solo cambió el nombre visible de marca/dominio, no la sociedad. Pendiente: incorporar un
+  logo/isotipo (Facu pasó una referencia visual el 2026-08-26, todavía sin definir dónde va
+  exactamente — favicon, header, o ambos).
 - Fotos de producto: **ya son fotos reales** de los perfumes que vende la clienta
   (`public/images/perfumes/`), a diferencia del placeholder de stock que se usaba antes.
-- Catálogo en Supabase/sitio real hoy: **45 perfumes + 1 combo** ya cargados (migración
-  `20260824010000_load_full_catalog.sql` + `20260825000000_add_product_category.sql`). Los 6
+- Catálogo en Supabase/sitio real hoy: **56 perfumes + 1 combo** ya cargados (migraciones
+  `20260824010000_load_full_catalog.sql`, `20260825000000_add_product_category.sql` y
+  `20260826000000_add_ronda2_products.sql` — esta última es la "ronda 2": 11 perfumes nuevos
+  que la clienta sumó a su catálogo de precios; ningún producto existente se tocó). Los 6
   productos originales (Yara Exclusive, Odyssey Limited, etc.) quedaron desde antes sin
   tocarse porque no aparecen en el catálogo real de precios de la clienta — ver nota en esa
-  migración. Las categorías Natura/nicho mencionadas antes no están representadas.
+  migración. Las categorías Natura/nicho mencionadas antes no están representadas. Los 11
+  productos nuevos fueron verificados uno por uno contra Fragrantica.com (link por fila en
+  el Excel maestro) — sin pendientes bloqueantes. "Vulcan" resultó ser "Vulcan Black Friday"
+  (Fragrantica ID 119220, confirmado por Facu) y los precios de los 11 fueron confirmados
+  por Facu como provistos por la propia clienta (aunque varios flyers traigan logo de un
+  mayorista/reventedor, no el de A&G). Única nota menor sin bloquear: "Amber Oud Gold 999.9
+  Dubai Edition" tiene notas reconstruidas por búsqueda (Fragrantica bloquea lectura directa,
+  error 403) en vez de lectura confirmada de la ficha — buen solapamiento con el flyer, no
+  100% exacto. Nota para no repetir: durante la carga se confundió por error "Amber Oud Gold
+  999.9 Dubai Edition" (nuevo) con el ya existente "Amber Oud Gold Edition" — son dos
+  productos reales distintos de Al Haramain, se corrigió antes de aplicar nada a producción.
 - El código de `App.tsx` (`fallbackPerfumes`) solo trae un catálogo de emergencia mínimo (los 6
   productos originales) para cuando no hay conexión a Supabase — no refleja el catálogo real.
   No confundir ese fallback con lo que ve el comprador en producción.

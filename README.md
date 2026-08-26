@@ -1,4 +1,4 @@
-# A&G Gisela — ecommerce de perfumes
+# A&G Perfumes — ecommerce de perfumes
 
 Ecommerce de reventa de perfumes multimarca en Argentina. Ver `CLAUDE.md`, `docs/PRODUCT.md`
 y `docs/DESIGN.md` para el contexto completo del proyecto.
