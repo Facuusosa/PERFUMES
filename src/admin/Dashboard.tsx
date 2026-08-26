@@ -10,6 +10,8 @@ const formatPrice = (price: number) =>
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [products, setProducts] = useState<Perfume[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Perfume | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -17,7 +19,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const loadProducts = async () => {
     if (!supabase) return;
     setLoading(true);
-    const { data } = await supabase.from('perfumes').select('*').order('created_at');
+    const { data, error } = await supabase.from('perfumes').select('*').order('created_at');
+    if (error) {
+      setLoadError('No se pudo cargar el catálogo. Probá de nuevo.');
+      setLoading(false);
+      return;
+    }
+    setLoadError(null);
     setProducts((data as Perfume[]) ?? []);
     setLoading(false);
   };
@@ -29,8 +37,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const handleDelete = async (product: Perfume) => {
     if (!supabase) return;
     const imagePath = product.image.split('/product-images/')[1];
-    await supabase.from('perfumes').delete().eq('id', product.id);
-    if (imagePath) await supabase.storage.from('product-images').remove([imagePath]);
+    const { error: deleteError } = await supabase.from('perfumes').delete().eq('id', product.id);
+    if (deleteError) {
+      setActionError('No se pudo eliminar el producto. Probá de nuevo.');
+      return;
+    }
+    if (imagePath) {
+      const { error: storageError } = await supabase.storage.from('product-images').remove([imagePath]);
+      if (storageError) console.error('No se pudo eliminar la foto del storage:', storageError);
+    }
+    setActionError(null);
     setDeletingId(null);
     loadProducts();
   };
@@ -66,6 +82,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         </button>
         {loading ? (
           <p className="mt-8 text-white/50">Cargando...</p>
+        ) : loadError ? (
+          <div className="mt-8 rounded-2xl border border-red-500/30 bg-red-500/5 p-6 text-center">
+            <p className="text-red-300">{loadError}</p>
+            <button
+              onClick={() => loadProducts()}
+              className="mt-4 rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-wide hover:bg-white/10"
+            >
+              Reintentar
+            </button>
+          </div>
         ) : (
           <table className="mt-8 w-full border-collapse text-sm">
             <thead>
@@ -90,7 +116,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <button onClick={() => setEditingProduct(product)} className="mr-4 text-xs uppercase text-white/60 hover:text-white">
                       Editar
                     </button>
-                    <button onClick={() => setDeletingId(product.id)} className="text-xs uppercase text-red-400 hover:text-red-300">
+                    <button
+                      onClick={() => {
+                        setActionError(null);
+                        setDeletingId(product.id);
+                      }}
+                      className="text-xs uppercase text-red-400 hover:text-red-300"
+                    >
                       Eliminar
                     </button>
                   </td>
@@ -104,6 +136,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5">
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#141210] p-6">
             <p>¿Seguro que querés eliminar {products.find((product) => product.id === deletingId)?.name}? No se puede deshacer.</p>
+            {actionError && <p className="mt-3 text-sm text-red-400">{actionError}</p>}
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => setDeletingId(null)} className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase">
                 Cancelar

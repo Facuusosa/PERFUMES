@@ -1,9 +1,13 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { Perfume, ProductCategory } from '../App';
 
 const categoryOptions: ProductCategory[] = ['Perfume', 'Combo', "Victoria's Secret"];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function isPostgresError(value: unknown): value is { code?: string; message?: string } {
+  return typeof value === 'object' && value !== null && ('code' in value || 'message' in value);
+}
 
 function slugify(name: string): string {
   return name
@@ -52,8 +56,32 @@ function ProductForm({ product, onDone, onCancel }: Props) {
   const [imagePreview, setImagePreview] = useState<string | null>(product?.image ?? null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [familyOptions, setFamilyOptions] = useState<string[]>([]);
 
   const isPerfume = form.category === 'Perfume';
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from('perfumes')
+      .select('family')
+      .then(({ data, error: familyError }) => {
+        if (familyError || !data) return;
+        const values = Array.from(
+          new Set(
+            data
+              .map((row) => (row as { family: string }).family)
+              .filter((value): value is string => Boolean(value && value.trim()))
+          )
+        ).sort((a, b) => a.localeCompare(b));
+        setFamilyOptions(values);
+      });
+  }, []);
+
+  const familySelectOptions =
+    form.family && !familyOptions.includes(form.family)
+      ? [...familyOptions, form.family].sort((a, b) => a.localeCompare(b))
+      : familyOptions;
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -141,13 +169,20 @@ function ProductForm({ product, onDone, onCancel }: Props) {
             description: form.description.trim(),
             accent: form.accent,
             image: imageUrl,
+            updated_at: new Date().toISOString(),
           })
           .eq('id', product.id);
         if (updateError) throw updateError;
       }
       onDone();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'No se pudo guardar. Probá de nuevo.');
+      if (isPostgresError(submitError) && submitError.code === '23505') {
+        setError('Ya existe un producto con esos datos.');
+      } else if (isPostgresError(submitError) && submitError.code === '42501') {
+        setError('No tenés permiso para hacer esto. Iniciá sesión de nuevo.');
+      } else {
+        setError(submitError instanceof Error ? submitError.message : 'No se pudo guardar. Probá de nuevo.');
+      }
     } finally {
       setSaving(false);
     }
@@ -178,7 +213,21 @@ function ProductForm({ product, onDone, onCancel }: Props) {
             <>
               <div>
                 <label className="block text-xs uppercase tracking-wide text-white/50">Familia olfativa</label>
-                <input required={isPerfume} value={form.family} onChange={(event) => setForm({ ...form, family: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]" />
+                {familyOptions.length > 0 ? (
+                  <select
+                    required={isPerfume}
+                    value={form.family}
+                    onChange={(event) => setForm({ ...form, family: event.target.value })}
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]"
+                  >
+                    <option value="">Elegí una familia</option>
+                    {familySelectOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input required={isPerfume} value={form.family} onChange={(event) => setForm({ ...form, family: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]" />
+                )}
               </div>
               <div>
                 <label className="block text-xs uppercase tracking-wide text-white/50">Notas</label>

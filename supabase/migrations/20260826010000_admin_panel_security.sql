@@ -27,8 +27,8 @@ CREATE POLICY "Authenticated can update perfumes" ON public.perfumes FOR UPDATE 
 DROP POLICY IF EXISTS "Public can delete perfumes" ON public.perfumes;
 CREATE POLICY "Authenticated can delete perfumes" ON public.perfumes FOR DELETE TO authenticated USING (true);
 
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('product-images', 'product-images', true)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('product-images', 'product-images', true, 5242880, ARRAY['image/png', 'image/jpeg', 'image/webp'])
 ON CONFLICT (id) DO NOTHING;
 
 DROP POLICY IF EXISTS "Public can view product images" ON storage.objects;

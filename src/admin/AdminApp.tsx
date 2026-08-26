@@ -17,7 +17,7 @@ function AdminApp() {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setCheckingSession(false);
-    });
+    }).catch(() => setCheckingSession(false));
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
     });

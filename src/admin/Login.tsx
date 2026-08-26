@@ -15,7 +15,13 @@ function Login() {
     setError(null);
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (signInError) setError('Usuario o contraseña incorrectos.');
+    if (signInError) {
+      if (/not confirmed/i.test(signInError.message)) {
+        setError('Tu usuario todavía no está confirmado. Pedile a quien armó el sitio que lo revise.');
+      } else {
+        setError('Usuario o contraseña incorrectos.');
+      }
+    }
   };
 
   return (
@@ -24,9 +30,9 @@ function Login() {
         <h1 className="font-serif text-3xl">Panel A&G</h1>
         <p className="mt-2 text-sm text-white/50">Ingresá con tu usuario para cargar productos.</p>
         <label className="mt-6 block text-xs uppercase tracking-wide text-white/50">Email</label>
-        <input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]" />
+        <input type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]" />
         <label className="mt-4 block text-xs uppercase tracking-wide text-white/50">Contraseña</label>
-        <input type="password" required value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]" />
+        <input type="password" required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]" />
         {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
         <button type="submit" disabled={loading} className="mt-6 w-full rounded-full bg-[#c99558] py-3 text-sm font-semibold uppercase tracking-wide text-black transition hover:bg-[#dba86c] disabled:opacity-50">
           {loading ? 'Ingresando...' : 'Ingresar'}
