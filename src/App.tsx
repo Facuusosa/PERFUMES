@@ -139,6 +139,7 @@ function App() {
   const [selectedVariantId, setSelectedVariantId] = useState<Record<string, string>>({});
   const dragStartY = useRef<number | null>(null);
   const dragYRef = useRef(0);
+  const prevCatalogPage = useRef(catalogPage);
   const toastTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const focusSearch = () => {
@@ -311,6 +312,13 @@ function App() {
   };
 
   useEffect(() => {
+    if (prevCatalogPage.current !== catalogPage) {
+      document.getElementById('coleccion')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+    prevCatalogPage.current = catalogPage;
+  }, [catalogPage]);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       if (selectedProduct) { closeProduct(); return; }
@@ -385,9 +393,9 @@ function App() {
             {paginatedPerfumes.length === 0 && <p className="mb-12 text-sm text-black/45">No encontramos productos con esos filtros. Probá ajustar la búsqueda, la categoría o el rango de precio.</p>}
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{paginatedPerfumes.map((perfume, index) => { const variants = getVariants(perfume); const selected = getSelectedVariant(perfume); return <article key={perfume.id} onClick={() => openProduct(perfume)} className="group relative min-h-[480px] cursor-pointer overflow-hidden p-7 text-white" style={{ background: `linear-gradient(145deg, ${perfume.accent}, #151515 120%)` }}><div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(255,255,255,.2),transparent_25%)] opacity-70" /><div className="relative z-10 flex h-full flex-col justify-between"><div className="flex justify-between text-[10px] uppercase tracking-[0.2em] text-white/65"><span>{String((catalogPage - 1) * CATALOG_PAGE_SIZE + index + 1).padStart(2, '0')} / {String(visiblePerfumes.length).padStart(2, '0')}</span><span>{perfume.family}</span></div><div className="absolute left-1/2 top-1/2 h-[66%] w-[92%] -translate-x-1/2 -translate-y-1/2"><div className="h-full w-full animate-card-float" style={{ '--float-delay': `${(index % 3) * -1.1}s` } as CSSProperties}><img src={selected.image} alt={selected.name} className="h-full w-full object-contain drop-shadow-[0_28px_25px_rgba(0,0,0,.48)] transition duration-700 group-hover:scale-105 group-hover:-translate-y-[6%]" /></div></div><div className="relative mt-auto"><p className="mb-2 text-xs text-white/65">{selected.notes}</p><h3 className="font-serif text-3xl tracking-[-0.04em]">{perfume.name}</h3>{variants.length > 1 && <div onClick={(event) => event.stopPropagation()} className="mt-3 flex flex-wrap gap-1.5">{variants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariantId((current) => ({ ...current, [perfume.id]: variant.id }))} className={`rounded-full border px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] transition ${selected.id === variant.id ? 'border-white bg-white/20 text-white' : 'border-white/25 text-white/55 hover:border-white/50'}`}>{variant.name}</button>)}</div>}<div className="mt-5 flex items-center justify-between border-t border-white/20 pt-4"><span className="text-sm">{formatPrice(perfume.price)}</span><button onClick={(event) => quickAdd(event, perfume)} className="inline-flex min-h-[44px] items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] transition hover:text-[#f2c891]"><Plus size={15} /> Agregar</button></div></div></div></article>; })}</div>
             {catalogTotalPages > 1 && <div className="mt-12 flex items-center justify-center gap-6">
-              <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.max(1, page - 1)); document.getElementById('coleccion')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' }); }} disabled={catalogPage === 1} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-30">Anterior</button>
-              <div className="flex items-center gap-1">{Array.from({ length: catalogTotalPages }, (_, i) => i + 1).map((page) => <button key={page} onClick={() => { setCatalogPage(page); document.getElementById('coleccion')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' }); }} aria-label={`Pagina ${page}`} className="relative flex h-[44px] w-[44px] items-center justify-center"><span className={`h-2 w-2 rounded-full transition ${page === catalogPage ? 'bg-[#151412]' : 'bg-black/20 hover:bg-black/40'}`} /></button>)}</div>
-              <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.min(catalogTotalPages, page + 1)); document.getElementById('coleccion')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' }); }} disabled={catalogPage === catalogTotalPages} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-30">Siguiente</button>
+              <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.max(1, page - 1)); }} disabled={catalogPage === 1} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-30">Anterior</button>
+              <div className="flex items-center gap-1">{Array.from({ length: catalogTotalPages }, (_, i) => i + 1).map((page) => <button key={page} onClick={(event) => { event.currentTarget.blur(); setCatalogPage(page); }} aria-label={`Pagina ${page}`} className="relative flex h-[44px] w-[44px] items-center justify-center"><span className={`h-2 w-2 rounded-full transition ${page === catalogPage ? 'bg-[#151412]' : 'bg-black/20 hover:bg-black/40'}`} /></button>)}</div>
+              <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.min(catalogTotalPages, page + 1)); }} disabled={catalogPage === catalogTotalPages} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-30">Siguiente</button>
             </div>}
           </div>
         </section>
