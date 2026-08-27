@@ -50,3 +50,10 @@ tipografía/paleta anterior, es una decisión a tomar con Facu, no a aplicar de 
 - `npm run build` — build de producción
 - `npm run lint` — ESLint
 - `npm run typecheck` — chequeo de tipos sin emitir
+
+## Health Stack
+- typecheck: npm run typecheck
+- lint: npm run lint
+- test: (no hay framework de testing instalado — decisión explícita, ver memoria del proyecto)
+- deadcode: (no hay knip instalado)
+- shell: (no hay scripts .sh en el repo)
