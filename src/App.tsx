@@ -39,6 +39,7 @@ export type Perfume = {
   description: string;
   variants?: Variant[] | null;
   category?: ProductCategory;
+  brand?: string;
 };
 
 const getCategory = (perfume: Perfume): ProductCategory => perfume.category ?? 'Perfume';
