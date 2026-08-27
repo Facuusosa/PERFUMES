@@ -15,11 +15,17 @@ retoma algo de ahí (Light Rays, tipografía Fraunces/Space Grotesk, mecanismos 
 - **Vite + React 18 + TypeScript**, todo en una sola página (`src/App.tsx`).
 - **Tailwind** (config propia, sin shadcn/ui).
 - **Supabase** como backend: tabla `perfumes`, con fallback embebido en el propio
-  `App.tsx` si no hay variables de entorno configuradas. Carga de catálogo hoy es manual
-  (migraciones SQL en `supabase/migrations/`), no hay panel de admin tipo Sanity Studio.
-  Facu va a cargar el catálogo él mismo por ahora — la pregunta de "cómo carga producto
-  la clienta sin ayuda técnica" (el requisito no negociable original) queda abierta,
-  no resuelta por este reemplazo.
+  `App.tsx` si no hay variables de entorno configuradas. El catálogo inicial se cargó por
+  migraciones SQL (`supabase/migrations/`), pero **desde el 2026-08-27 ya existe un panel
+  de admin real en `/admin`** (`src/admin/`: `Login.tsx`, `Dashboard.tsx`, `ProductForm.tsx`,
+  `AdminApp.tsx`), en producción en `aygperfumes.com.ar/admin`. Login con Supabase Auth
+  (registro público desactivado a propósito, cuenta de la clienta creada a mano), permite
+  alta/edición/baja de productos con foto (sube a Supabase Storage), con RLS restringido a
+  usuarios autenticados (`supabase/migrations/20260826010000_admin_panel_security.sql`).
+  Resuelve el requisito no negociable original ("cómo carga producto la clienta sin ayuda
+  técnica"). Probado de punta a punta (crear/editar/borrar) antes de integrarse a `master`.
+  Pendiente menor: el campo `stock` no está en el formulario todavía (decisión de producto
+  sin tomar, no un olvido).
 - **Checkout por WhatsApp** (arma el mensaje con el pedido y el precio, no hay Mercado Pago
   integrado en este código). Revisar con Facu si esto es definitivo o intermedio.
 - **Hosting: Netlify, decisión cerrada** (ya hay `netlify.toml` en el repo, deploy real

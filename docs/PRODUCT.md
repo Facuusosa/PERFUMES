@@ -25,11 +25,12 @@ datos: campo `category` en la tabla `perfumes` de Supabase (migración
 ## Quién lo usa
 - **Administradora (la clienta):** no sabe de tecnología. Necesitaba cargar/editar producto,
   precio, stock y fotos ella sola, sin ayuda técnica — era el requisito no negociable del
-  proyecto, resuelto originalmente con un panel Sanity Studio. **Pendiente desde el reemplazo
-  de stack del 2026-08-17:** el código actual (Vite + Supabase) no trae ningún panel de admin;
-  el catálogo se carga por migraciones SQL a mano. Por ahora Facu va a cargar el catálogo él
-  mismo, pero la pregunta de fondo (cómo carga la clienta sin ayuda técnica) sigue sin
-  resolverse y hay que retomarla antes de que esto quede en manos de ella.
+  proyecto, resuelto originalmente con un panel Sanity Studio. **[RESUELTO 2026-08-27]** el
+  panel de admin nuevo (`/admin`, ver `CLAUDE.md`) ya está en producción en
+  `aygperfumes.com.ar/admin`: la clienta entra con su propio usuario y puede agregar, editar
+  y borrar productos con foto, sin tocar código ni Supabase directamente. Probado de punta a
+  punta antes de integrarse. Pendiente menor: el campo `stock` mencionado en este requisito
+  todavía no está en el formulario — decisión de producto sin tomar, no un olvido.
 - **Comprador final:** llega mayormente desde redes (Instagram/WhatsApp), compara precio y quiere sentir que el producto es original y que la compra es segura.
 
 ## Objetivo de conversión
