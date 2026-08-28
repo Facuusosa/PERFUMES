@@ -57,22 +57,22 @@ const getVariants = (perfume: Perfume): Variant[] =>
 const variantLabel = (product: Perfume, variant: Variant) => variant.name === product.name ? product.name : `${product.name} — ${variant.name}`;
 
 const fallbackPerfumes: Perfume[] = [
-  { id: 'yara-exclusive', name: 'Yara Exclusive', subtitle: 'Intenso · envolvente', family: 'Oriental dulce', notes: 'Ámbar · vainilla · sándalo', price: 45000, volume: '100 ml', accent: '#9b5b2a', image: '/images/perfumes/yara-exclusive.png', description: 'Una estela cálida y sofisticada, con la profundidad del ámbar y un final suave de vainilla.', category: 'Perfume', brand: 'Lattafa' },
-  { id: 'yara-elixir', name: 'Yara Elixir', subtitle: 'Floral · radiante', family: 'Floral oriental', notes: 'Rosa · miel · almizcle', price: 48000, volume: '100 ml', accent: '#a84b5a', image: '/images/perfumes/yara-elixir.png', description: 'Dulce, femenino y luminoso. Una versión de Yara con más cuerpo y una presencia aterciopelada.', category: 'Perfume', brand: 'Lattafa' },
-  { id: 'qimmah-women', name: 'Qimmah For Women', subtitle: 'Dulce · elegante', family: 'Amaderado dulce', notes: 'Frutos rojos · jazmín · vainilla', price: 52000, volume: '100 ml', accent: '#466b5b', image: '/images/perfumes/qimmah-women.png', description: 'Una composición intensa que mezcla flores blancas, frutos jugosos y un fondo cremoso.', category: 'Perfume', brand: 'Lattafa' },
-  { id: 'art-of-universe', name: 'Art of Universe', subtitle: 'Magnético · especiado', family: 'Amaderado especiado', notes: 'Azafrán · cuero · maderas', price: 58000, volume: '100 ml', accent: '#304679', image: '/images/perfumes/art-of-universe.png', description: 'Un perfume de carácter, inspirado en la inmensidad del universo y el brillo de los metales.', category: 'Perfume', brand: 'Lattafa Pride' },
-  { id: 'odyssey-limited', name: 'Odyssey Limited', subtitle: 'Fresco · aventurero', family: 'Aromático fresco', notes: 'Cítricos · lavanda · maderas', price: 42000, volume: '100 ml', accent: '#5d91aa', image: '/images/perfumes/odyssey-limited.png', description: 'Frescura limpia y energía cítrica para acompañar todos los días con estilo.', category: 'Perfume', brand: 'Armaf' },
-  { id: 'now-women', name: 'Now Women', subtitle: 'Frutal · contemporáneo', family: 'Floral frutal', notes: 'Pera · peonía · vainilla', price: 38000, volume: '100 ml', accent: '#b78686', image: '/images/perfumes/now-women.png', description: 'Un aroma amable y moderno, con flores delicadas y una dulzura que queda cerca de la piel.', category: 'Perfume', brand: 'RAVE' },
+  { id: 'yara-exclusive', name: 'Yara Exclusive', subtitle: 'Intenso · envolvente', family: 'Oriental dulce', notes: 'Ámbar · vainilla · sándalo', price: 45000, volume: '100 ml', accent: '#9b5b2a', image: '/images/perfumes/yara-exclusive.webp', description: 'Una estela cálida y sofisticada, con la profundidad del ámbar y un final suave de vainilla.', category: 'Perfume', brand: 'Lattafa' },
+  { id: 'yara-elixir', name: 'Yara Elixir', subtitle: 'Floral · radiante', family: 'Floral oriental', notes: 'Rosa · miel · almizcle', price: 48000, volume: '100 ml', accent: '#a84b5a', image: '/images/perfumes/yara-elixir.webp', description: 'Dulce, femenino y luminoso. Una versión de Yara con más cuerpo y una presencia aterciopelada.', category: 'Perfume', brand: 'Lattafa' },
+  { id: 'qimmah-women', name: 'Qimmah For Women', subtitle: 'Dulce · elegante', family: 'Amaderado dulce', notes: 'Frutos rojos · jazmín · vainilla', price: 52000, volume: '100 ml', accent: '#466b5b', image: '/images/perfumes/qimmah-women.webp', description: 'Una composición intensa que mezcla flores blancas, frutos jugosos y un fondo cremoso.', category: 'Perfume', brand: 'Lattafa' },
+  { id: 'art-of-universe', name: 'Art of Universe', subtitle: 'Magnético · especiado', family: 'Amaderado especiado', notes: 'Azafrán · cuero · maderas', price: 58000, volume: '100 ml', accent: '#304679', image: '/images/perfumes/art-of-universe.webp', description: 'Un perfume de carácter, inspirado en la inmensidad del universo y el brillo de los metales.', category: 'Perfume', brand: 'Lattafa Pride' },
+  { id: 'odyssey-limited', name: 'Odyssey Limited', subtitle: 'Fresco · aventurero', family: 'Aromático fresco', notes: 'Cítricos · lavanda · maderas', price: 42000, volume: '100 ml', accent: '#5d91aa', image: '/images/perfumes/odyssey-limited.webp', description: 'Frescura limpia y energía cítrica para acompañar todos los días con estilo.', category: 'Perfume', brand: 'Armaf' },
+  { id: 'now-women', name: 'Now Women', subtitle: 'Frutal · contemporáneo', family: 'Floral frutal', notes: 'Pera · peonía · vainilla', price: 38000, volume: '100 ml', accent: '#b78686', image: '/images/perfumes/now-women.webp', description: 'Un aroma amable y moderno, con flores delicadas y una dulzura que queda cerca de la piel.', category: 'Perfume', brand: 'RAVE' },
 ];
 
 const formatPrice = (price: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(price);
 const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const storyImages = [
-  '/images/perfumes/lattafa-khamrah.png',
-  '/images/perfumes/yara-elixir.png',
-  '/images/perfumes/qimmah-women.png',
-  '/images/perfumes/now-women.png',
+  '/images/perfumes/lattafa-khamrah.webp',
+  '/images/perfumes/yara-elixir.webp',
+  '/images/perfumes/qimmah-women.webp',
+  '/images/perfumes/now-women.webp',
 ];
 
 const storySlides = [
@@ -358,8 +358,8 @@ function App() {
 
       <main>
         <section id="inicio" className="relative flex min-h-[640px] items-end overflow-hidden bg-[#080909] px-6 pb-8 pt-28 md:min-h-screen md:px-12 md:pb-20 md:pt-32">
-          <video className="absolute inset-0 hidden h-full w-full object-cover object-[70%_center] md:block" autoPlay={!prefersReducedMotion} muted loop={!prefersReducedMotion} playsInline preload="auto" poster="/images/perfumes/art-of-universe.png" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1787722785/Underwater_perfume_advertisement__202608260154.mp4" type="video/mp4" /></video>
-          <video className="absolute inset-0 h-full w-full object-cover object-center md:hidden" autoPlay={!prefersReducedMotion} muted loop={!prefersReducedMotion} playsInline preload="auto" poster="/images/perfumes/art-of-universe.png" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1787722784/Underwater_perfume_advertisement_202608260154_202608260224.mp4" type="video/mp4" /></video>
+          <video className="absolute inset-0 hidden h-full w-full object-cover object-[70%_center] md:block" autoPlay={!prefersReducedMotion} muted loop={!prefersReducedMotion} playsInline preload="auto" poster="/images/perfumes/art-of-universe.webp" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1787722785/Underwater_perfume_advertisement__202608260154.mp4" type="video/mp4" /></video>
+          <video className="absolute inset-0 h-full w-full object-cover object-center md:hidden" autoPlay={!prefersReducedMotion} muted loop={!prefersReducedMotion} playsInline preload="auto" poster="/images/perfumes/art-of-universe.webp" aria-hidden="true"><source src="https://res.cloudinary.com/u5z5trw7/video/upload/v1787722784/Underwater_perfume_advertisement_202608260154_202608260224.mp4" type="video/mp4" /></video>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b0a08 0%, rgba(11,10,8,0.92) 25%, rgba(11,10,8,0.55) 45%, rgba(11,10,8,0) 65%)' }} />
           <div className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-[#0b0b0a] via-[#0b0b0a]/70 to-transparent md:h-40 md:via-transparent" />
           <div className="relative z-10 mx-auto w-full max-w-[1440px]">

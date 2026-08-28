@@ -42,6 +42,10 @@ CLAUDE.local.md
 /fotos-clienta
 .gstack/
 
+# backup local de fotos PNG originales (2026-08-28, ya preservadas en el
+# historial de git de antes de la conversion a webp; no duplicar en el repo)
+/assets-originales-fotos-perfumes
+
 # Local Netlify folder
 .netlify
 
