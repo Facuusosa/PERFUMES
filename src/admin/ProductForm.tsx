@@ -1,8 +1,9 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import type { Perfume, ProductCategory } from '../App';
+import type { Gender, Perfume, ProductCategory } from '../App';
 
 const categoryOptions: ProductCategory[] = ['Perfume', 'Combo', "Victoria's Secret"];
+const genderOptions: Gender[] = ['Mujer', 'Hombre', 'Unisex'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(price);
@@ -31,10 +32,11 @@ type FormState = {
   volume: string;
   description: string;
   accent: string;
+  gender: Gender | '';
 };
 
 function emptyForm(): FormState {
-  return { name: '', subtitle: '', category: 'Perfume', brand: '', family: '', notes: '', price: '', volume: '100 ml', description: '', accent: '#c99558' };
+  return { name: '', subtitle: '', category: 'Perfume', brand: '', family: '', notes: '', price: '', volume: '100 ml', description: '', accent: '#c99558', gender: '' };
 }
 
 function fromProduct(product: Perfume): FormState {
@@ -49,6 +51,7 @@ function fromProduct(product: Perfume): FormState {
     volume: product.volume,
     description: product.description,
     accent: product.accent,
+    gender: product.gender ?? '',
   };
 }
 
@@ -182,6 +185,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
           description: form.description.trim(),
           accent: form.accent,
           image: imageUrl,
+          gender: form.gender || null,
         });
         if (insertError) throw insertError;
       } else {
@@ -200,6 +204,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
             description: form.description.trim(),
             accent: form.accent,
             image: imageUrl,
+            gender: form.gender || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', product.id);
@@ -243,6 +248,16 @@ function ProductForm({ product, onDone, onCancel }: Props) {
               <label className="block text-xs uppercase tracking-wide text-white/50">Categoría</label>
               <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as ProductCategory })} className="mt-1 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]">
                 {categoryOptions.map((option) => (
+                  <option key={option} value={option} className="bg-[#1a1a18] text-white">{option}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-white/50">Para quién</label>
+              <p className="mt-1 text-xs text-white/40">Opcional — así el comprador puede filtrar por Mujer, Hombre o Unisex.</p>
+              <select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value as Gender | '' })} className="mt-2 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]">
+                <option value="" className="bg-[#1a1a18] text-white">Sin especificar</option>
+                {genderOptions.map((option) => (
                   <option key={option} value={option} className="bg-[#1a1a18] text-white">{option}</option>
                 ))}
               </select>
@@ -353,7 +368,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
                     <span className="px-4 text-center text-xs text-white/50">Subí una foto para verla acá</span>
                   )}
                 </div>
-                <p className="mt-5 text-[10px] uppercase tracking-[0.25em] text-white/70">{previewFamily}</p>
+                <p className="mt-5 text-[10px] uppercase tracking-[0.25em] text-white/70">{previewFamily}{form.gender ? ` · ${form.gender}` : ''}</p>
                 <h3 className="mt-2 font-serif text-3xl leading-none tracking-[-0.04em]">{form.name || 'Nombre del producto'}</h3>
                 <p className="mt-2 text-sm text-white/70">{form.subtitle || 'Subtítulo'}</p>
                 <p className="mt-4 text-sm leading-6 text-white/85">{form.description || 'Acá va a aparecer la descripción que escribas más abajo.'}</p>

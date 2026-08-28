@@ -28,10 +28,42 @@ retoma algo de ahí (Light Rays, tipografía Fraunces/Space Grotesk, mecanismos 
   sin tomar, no un olvido).
 - **Checkout por WhatsApp** (arma el mensaje con el pedido y el precio, no hay Mercado Pago
   integrado en este código). Revisar con Facu si esto es definitivo o intermedio.
-- **Hosting: Netlify, decisión cerrada** (ya hay `netlify.toml` en el repo, deploy real
-  pendiente de ejecutar). No evaluar Vercel para este proyecto: su plan gratuito prohíbe
-  ecommerce/checkout explícitamente (Acceptable Use Policy, verificado 2026-08-23), habría
-  que pagar el plan Pro (USD 20/mes). Netlify sí permite ecommerce en su plan free.
+- **Hosting: Cloudflare Workers (static assets), migrado desde Netlify el 2026-08-28.**
+  Netlify pausó el sitio completo (503) al superar los 300 créditos/mes de su plan free —
+  causa real: 15 deploys individuales en el mes (225 créditos) + fotos de catálogo sin
+  comprimir (107 créditos de bandwidth). En vez de pagar Netlify, se migró a Cloudflare
+  (dominio ya estaba delegado ahí, ver `docs/PRODUCT.md`), que no tiene ese mecanismo de
+  "créditos que agotan y pausan todo" — plan gratis, ancho de banda sin límite publicado,
+  500 builds/mes (vs. los ~15-20/mes que veníamos gastando). `netlify.toml` queda en el
+  repo sin usarse (histórico); el deploy real es `wrangler.toml` + `worker/index.ts`
+  (Worker mínimo que sirve `dist/` como static assets, `not_found_handling =
+  "single-page-application"` resuelve el routing de SPA). **Ojo con las variables de
+  entorno en Cloudflare: hay dos secciones distintas y es fácil confundirlas** — "Runtime
+  variables and secrets" (Settings, solo las ve el Worker en ejecución) vs. "Build
+  variables and secrets" (Settings → Build, las que Vite necesita en `npm run build` para
+  embeber `import.meta.env.VITE_*`). `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` tienen
+  que estar cargadas en la sección de **Build**, si no el sitio cae al catálogo de
+  fallback local sin avisar (no tira error, simplemente no llama a Supabase). No evaluar
+  Vercel para este proyecto: su plan gratuito prohíbe ecommerce/checkout explícitamente
+  (Acceptable Use Policy, verificado 2026-08-23).
+- **Fotos de catálogo: WebP, no PNG.** Las 57 fotos originales (PNG sin comprimir, 114 MB
+  en total) se convirtieron a WebP calidad 85 (12 MB, -89.7%, sin pérdida visual — eran la
+  causa del bandwidth alto). Backup de los PNG originales en
+  `assets-originales-fotos-perfumes/` (gitignored, no se sube). Script reutilizable para
+  optimizar fotos nuevas: `node scripts/optimize-images.mjs <origen> <destino>`. Al subir
+  fotos nuevas al catálogo, pasarlas por ese script antes de comitear — el panel de admin
+  (`ProductForm.tsx`) todavía NO comprime automáticamente lo que sube la clienta.
+
+## Riesgos conocidos de los planes gratis del stack (revisar si algo "deja de andar")
+- **Supabase se pausa solo tras 7 días sin recibir ninguna petición a su API.** Si el sitio
+  alguna vez queda caído más de 2-3 días por cualquier motivo, chequear también el estado
+  del proyecto en Supabase (Settings → General) antes de asumir que el único problema es
+  el hosting.
+- **Supabase Storage: 1 GB de límite gratis.** El panel de admin sube fotos sin comprimir
+  ahí — no es un problema con el volumen actual (57 productos), pero puede acercarse si el
+  catálogo crece mucho. Ver `scripts/optimize-images.mjs` para comprimir manualmente.
+- Detalle completo y por qué se investigó esto: ver memoria del proyecto
+  `feedback_vigilar-limites-free-tier-proveedores`.
 
 ## Contradicciones con `docs/DESIGN.md` heredado (a resolver, no ignorar)
 El código trae **Inter + Playfair Display** y colores propios (`#0b0b0a`, acento `#c99558`),
