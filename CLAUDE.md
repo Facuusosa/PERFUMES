@@ -24,8 +24,9 @@ retoma algo de ahí (Light Rays, tipografía Fraunces/Space Grotesk, mecanismos 
   usuarios autenticados (`supabase/migrations/20260826010000_admin_panel_security.sql`).
   Resuelve el requisito no negociable original ("cómo carga producto la clienta sin ayuda
   técnica"). Probado de punta a punta (crear/editar/borrar) antes de integrarse a `master`.
-  Pendiente menor: el campo `stock` no está en el formulario todavía (decisión de producto
-  sin tomar, no un olvido).
+  El campo `stock` **[DECIDIDO 2026-08-30] no se agrega por ahora** — la clienta maneja poco
+  volumen y no tiene lugar físico para un control granular por unidad; se retoma si el
+  catálogo crece. Ver `docs/PRODUCT.md`.
 - **Checkout por WhatsApp** (arma el mensaje con el pedido y el precio, no hay Mercado Pago
   integrado en este código). Revisar con Facu si esto es definitivo o intermedio.
 - **Hosting: Cloudflare Workers (static assets), migrado desde Netlify el 2026-08-28.**

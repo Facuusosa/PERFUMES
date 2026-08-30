@@ -29,8 +29,11 @@ datos: campo `category` en la tabla `perfumes` de Supabase (migración
   panel de admin nuevo (`/admin`, ver `CLAUDE.md`) ya está en producción en
   `aygperfumes.com.ar/admin`: la clienta entra con su propio usuario y puede agregar, editar
   y borrar productos con foto, sin tocar código ni Supabase directamente. Probado de punta a
-  punta antes de integrarse. Pendiente menor: el campo `stock` mencionado en este requisito
-  todavía no está en el formulario — decisión de producto sin tomar, no un olvido.
+  punta antes de integrarse. El campo `stock` mencionado en este requisito **[DECIDIDO
+  2026-08-30] no se agrega por ahora** — la clienta confirmó que maneja poco volumen y no
+  tiene lugar físico para llevar un control granular por unidad, así que no aporta valor
+  real todavía. No es un olvido ni queda pendiente; se retoma si el catálogo/volumen crece
+  lo suficiente como para justificarlo.
 - **Comprador final:** llega mayormente desde redes (Instagram/WhatsApp), compara precio y quiere sentir que el producto es original y que la compra es segura.
 
 ## Objetivo de conversión
