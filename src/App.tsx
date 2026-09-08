@@ -18,7 +18,7 @@ import {
 import { supabase } from './lib/supabaseClient';
 import { posthog } from './lib/analytics';
 
-export type Variant = {
+type Variant = {
   id: string;
   name: string;
   notes: string;
