@@ -14,5 +14,48 @@
       "Read(./.env.*)",
       "Read(./.env.local)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-heavy-folders.cjs",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-orphans-reminder.cjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/block-png.cjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/typecheck-on-save.cjs",
+            "timeout": 30,
+            "statusMessage": "Chequeando tipos..."
+          }
+        ]
+      }
+    ]
   }
 }
