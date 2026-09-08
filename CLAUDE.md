@@ -78,12 +78,6 @@ tipografía/paleta anterior, es una decisión a tomar con Facu, no a aplicar de 
 - Las fotos de producto (`public/images/perfumes/`) ya son de los perfumes reales que la
   clienta vende (no placeholders de stock genérico como antes).
 
-## Comandos
-- `npm run dev` — servidor de desarrollo (Vite)
-- `npm run build` — build de producción
-- `npm run lint` — ESLint
-- `npm run typecheck` — chequeo de tipos sin emitir
-
 ## Health Stack
 - typecheck: npm run typecheck
 - lint: npm run lint
