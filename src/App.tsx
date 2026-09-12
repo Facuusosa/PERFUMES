@@ -150,6 +150,7 @@ function App() {
   const toastTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const catalogGridRef = useRef<HTMLDivElement>(null);
+  const searchTrackTimeoutRef = useRef<number | null>(null);
   const focusSearch = () => {
     setIsMenuOpen(false);
     document.getElementById('coleccion')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
@@ -229,6 +230,17 @@ function App() {
   const CATALOG_PAGE_SIZE = 12;
   const catalogTotalPages = Math.max(1, Math.ceil(visiblePerfumes.length / CATALOG_PAGE_SIZE));
   const paginatedPerfumes = visiblePerfumes.slice((catalogPage - 1) * CATALOG_PAGE_SIZE, catalogPage * CATALOG_PAGE_SIZE);
+
+  useEffect(() => {
+    if (searchTrackTimeoutRef.current) window.clearTimeout(searchTrackTimeoutRef.current);
+    const query = searchQuery.trim();
+    if (!query) return;
+    searchTrackTimeoutRef.current = window.setTimeout(() => {
+      posthog.capture('search_performed', { query, results_count: visiblePerfumes.length });
+    }, 600);
+    return () => { if (searchTrackTimeoutRef.current) window.clearTimeout(searchTrackTimeoutRef.current); };
+  }, [searchQuery, visiblePerfumes.length]);
+
   const setActiveFamilyAndResetPage = (family: string) => { setActiveFamily(family); setCatalogPage(1); };
   const toggleGender = (gender: Gender) => { setActiveGender((current) => (current === gender ? null : gender)); setCatalogPage(1); };
   const goToCategory = (category: ProductCategory) => {
