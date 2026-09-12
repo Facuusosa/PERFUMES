@@ -149,6 +149,7 @@ function App() {
   const prevCatalogPage = useRef(catalogPage);
   const toastTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const catalogGridRef = useRef<HTMLDivElement>(null);
   const focusSearch = () => {
     setIsMenuOpen(false);
     document.getElementById('coleccion')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
@@ -248,12 +249,20 @@ function App() {
     return variants.find((variant) => variant.id === selectedVariantId[perfume.id]) ?? variants[0];
   };
 
-  const addToCart = (product: Perfume, variant: Variant) => {
+  const addToCart = (product: Perfume, variant: Variant, source: 'grid_quick_add' | 'modal') => {
     setCart((items) => {
       const existing = items.find((item) => item.product.id === product.id && item.variant.id === variant.id);
       return existing
         ? items.map((item) => item.product.id === product.id && item.variant.id === variant.id ? { ...item, quantity: item.quantity + 1 } : item)
         : [...items, { product, variant, quantity: 1 }];
+    });
+    posthog.capture('product_added_to_cart', {
+      product_id: product.id,
+      product_name: product.name,
+      variant_name: variant.name,
+      price: product.price,
+      quantity: 1,
+      source,
     });
   };
 
@@ -266,7 +275,7 @@ function App() {
   const quickAdd = (event: ReactMouseEvent, product: Perfume) => {
     event.stopPropagation();
     const variant = getSelectedVariant(product);
-    addToCart(product, variant);
+    addToCart(product, variant, 'grid_quick_add');
     showToast(`${variantLabel(product, variant)} agregado al carrito`);
   };
 
@@ -293,6 +302,12 @@ function App() {
     setDragY(0);
     dragYRef.current = 0;
     setSelectedProduct(product);
+    posthog.capture('product_viewed', {
+      product_id: product.id,
+      product_name: product.name,
+      category: getCategory(product),
+      price: product.price,
+    });
   };
 
   const closeProduct = () => {
@@ -328,15 +343,20 @@ function App() {
     }
   };
 
-  const addFromModal = (product: Perfume, variant: Variant) => {
-    addToCart(product, variant);
-    closeProduct();
+  const openCart = (source: 'header_icon' | 'after_add_from_modal') => {
     setIsCartOpen(true);
+    posthog.capture('cart_opened', { source, cart_items_count: cartCount, cart_total: cartTotal });
+  };
+
+  const addFromModal = (product: Perfume, variant: Variant) => {
+    addToCart(product, variant, 'modal');
+    closeProduct();
+    openCart('after_add_from_modal');
   };
 
   useEffect(() => {
     if (prevCatalogPage.current !== catalogPage) {
-      document.getElementById('coleccion')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+      catalogGridRef.current?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
     }
     prevCatalogPage.current = catalogPage;
   }, [catalogPage]);
@@ -368,7 +388,7 @@ function App() {
           </div>
           <div className="flex items-center gap-3">
             <button aria-label="Buscar producto" onClick={focusSearch} className="flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-white/10"><Search size={17} /></button>
-            <button aria-label="Abrir carrito" onClick={() => setIsCartOpen(true)} className="relative flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-white/10"><ShoppingBag size={17} />{cartCount > 0 && <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c99558] px-1 text-[9px] font-bold text-black">{cartCount}</span>}</button>
+            <button aria-label="Abrir carrito" onClick={() => openCart('header_icon')} className="relative flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-white/10"><ShoppingBag size={17} />{cartCount > 0 && <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c99558] px-1 text-[9px] font-bold text-black">{cartCount}</span>}</button>
             <a href="#coleccion" className="hidden whitespace-nowrap rounded-full bg-[#f2eee7] px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-black transition hover:bg-[#c99558] lg:block">Ver colección</a>
             <button aria-label="Abrir menú" onClick={() => setIsMenuOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full lg:hidden"><Menu size={20} /></button>
           </div>
@@ -418,7 +438,7 @@ function App() {
             </div>
             {activeCategory === 'Perfume' && !isSearching && <div className="mb-12 flex gap-2 overflow-x-auto pb-2">{families.map((family) => <button key={family} onClick={() => setActiveFamilyAndResetPage(family)} className={`inline-flex min-h-[44px] items-center whitespace-nowrap rounded-full border px-4 text-[10px] uppercase tracking-[0.17em] transition ${activeFamily === family ? 'border-[#c99558] bg-[#c99558] text-[#151412]' : 'border-black/20 text-black/55 hover:border-black/60'}`}>{family}</button>)}</div>}
             {paginatedPerfumes.length === 0 && <p className="mb-12 text-sm text-black/45">No encontramos productos con esos filtros. Probá ajustar la búsqueda, la categoría o el rango de precio.</p>}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{paginatedPerfumes.map((perfume, index) => { const variants = getVariants(perfume); const selected = getSelectedVariant(perfume); return <article key={perfume.id} onClick={() => openProduct(perfume)} className="group relative min-h-[480px] cursor-pointer overflow-hidden p-7 text-white" style={{ background: `linear-gradient(145deg, ${perfume.accent}, #151515 120%)` }}><div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(255,255,255,.2),transparent_25%)] opacity-70" /><div className="relative z-10 flex h-full flex-col justify-between"><div className="flex justify-between text-[10px] uppercase tracking-[0.2em] text-white/65"><span>{String((catalogPage - 1) * CATALOG_PAGE_SIZE + index + 1).padStart(2, '0')} / {String(visiblePerfumes.length).padStart(2, '0')}</span><span>{perfume.family}{perfume.gender ? ` · ${perfume.gender}` : ''}</span></div><div className="absolute left-1/2 top-1/2 h-[66%] w-[92%] -translate-x-1/2 -translate-y-1/2"><div className="h-full w-full animate-card-float" style={{ '--float-delay': `${(index % 3) * -1.1}s` } as CSSProperties}><img src={selected.image} alt={selected.name} className="h-full w-full object-contain drop-shadow-[0_28px_25px_rgba(0,0,0,.48)] transition duration-700 group-hover:scale-105 group-hover:-translate-y-[6%]" /></div></div><div className="relative mt-auto"><p className="mb-2 text-xs text-white/65">{selected.notes}</p><h3 className="font-serif text-3xl tracking-[-0.04em]">{perfume.name}</h3>{variants.length > 1 && <div onClick={(event) => event.stopPropagation()} className="mt-3 flex flex-wrap gap-1.5">{variants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariantId((current) => ({ ...current, [perfume.id]: variant.id }))} className={`rounded-full border px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] transition ${selected.id === variant.id ? 'border-white bg-white/20 text-white' : 'border-white/25 text-white/55 hover:border-white/50'}`}>{variant.name}</button>)}</div>}<div className="mt-5 flex items-center justify-between border-t border-white/20 pt-4"><span className="text-sm">{formatPrice(perfume.price)}</span><button onClick={(event) => quickAdd(event, perfume)} className="inline-flex min-h-[44px] items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] transition hover:text-[#f2c891]"><Plus size={15} /> Agregar</button></div></div></div></article>; })}</div>
+            <div ref={catalogGridRef} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{paginatedPerfumes.map((perfume, index) => { const variants = getVariants(perfume); const selected = getSelectedVariant(perfume); return <article key={perfume.id} onClick={() => openProduct(perfume)} className="group relative min-h-[480px] cursor-pointer overflow-hidden p-7 text-white" style={{ background: `linear-gradient(145deg, ${perfume.accent}, #151515 120%)` }}><div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(255,255,255,.2),transparent_25%)] opacity-70" /><div className="relative z-10 flex h-full flex-col justify-between"><div className="flex justify-between text-[10px] uppercase tracking-[0.2em] text-white/65"><span>{String((catalogPage - 1) * CATALOG_PAGE_SIZE + index + 1).padStart(2, '0')} / {String(visiblePerfumes.length).padStart(2, '0')}</span><span>{perfume.family}{perfume.gender ? ` · ${perfume.gender}` : ''}</span></div><div className="absolute left-1/2 top-1/2 h-[66%] w-[92%] -translate-x-1/2 -translate-y-1/2"><div className="h-full w-full animate-card-float" style={{ '--float-delay': `${(index % 3) * -1.1}s` } as CSSProperties}><img src={selected.image} alt={selected.name} className="h-full w-full object-contain drop-shadow-[0_28px_25px_rgba(0,0,0,.48)] transition duration-700 group-hover:scale-105 group-hover:-translate-y-[6%]" /></div></div><div className="relative mt-auto"><p className="mb-2 text-xs text-white/65">{selected.notes}</p><h3 className="font-serif text-3xl tracking-[-0.04em]">{perfume.name}</h3>{variants.length > 1 && <div onClick={(event) => event.stopPropagation()} className="mt-3 flex flex-wrap gap-1.5">{variants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariantId((current) => ({ ...current, [perfume.id]: variant.id }))} className={`rounded-full border px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] transition ${selected.id === variant.id ? 'border-white bg-white/20 text-white' : 'border-white/25 text-white/55 hover:border-white/50'}`}>{variant.name}</button>)}</div>}<div className="mt-5 flex items-center justify-between border-t border-white/20 pt-4"><span className="text-sm">{formatPrice(perfume.price)}</span><button onClick={(event) => quickAdd(event, perfume)} className="inline-flex min-h-[44px] items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] transition hover:text-[#f2c891]"><Plus size={15} /> Agregar</button></div></div></div></article>; })}</div>
             {catalogTotalPages > 1 && <div className="mt-12 flex items-center justify-center gap-2 sm:gap-6">
               <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.max(1, page - 1)); }} disabled={catalogPage === 1} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-30">Anterior</button>
               <div className="flex items-center">{Array.from({ length: catalogTotalPages }, (_, i) => i + 1).map((page) => <button key={page} onClick={(event) => { event.currentTarget.blur(); setCatalogPage(page); }} aria-label={`Pagina ${page}`} className="relative flex h-11 w-8 items-center justify-center sm:w-11"><span className={`h-2 w-2 rounded-full transition ${page === catalogPage ? 'bg-[#151412]' : 'bg-black/20 hover:bg-black/40'}`} /></button>)}</div>
