@@ -162,6 +162,7 @@ function App() {
   const dragStartY = useRef<number | null>(null);
   const dragYRef = useRef(0);
   const prevCatalogFilterKey = useRef(`${catalogPage}|${activeGender}|${activeFamily}|${activeCategory}`);
+  const prevActiveCategory = useRef(activeCategory);
   const toastTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const catalogGridRef = useRef<HTMLDivElement>(null);
@@ -434,16 +435,22 @@ function App() {
     openCart('after_add_from_modal');
   };
 
-  // Dispara scroll hacia el catálogo cuando cambia la página O cualquier
-  // filtro de click (género/familia/categoría) — antes solo miraba la
-  // página, así que aplicar un filtro estando ya en la página 1 no movía
-  // la pantalla y parecía que el filtro no había hecho nada (dead click
-  // en PostHog: 8 de 37 en la semana del 12/9 eran justo estos filtros).
+  // Dispara scroll hacia el catálogo cuando cambia la página O un filtro
+  // de click (género/familia) — antes solo miraba la página, así que
+  // aplicar un filtro estando ya en la página 1 no movía la pantalla y
+  // parecía que el filtro no había hecho nada (dead click en PostHog: 8
+  // de 37 en la semana del 12/9 eran justo estos filtros).
+  // Categoría queda afuera: cambiarla ya tiene su propio scroll (al inicio
+  // de la sección), y en "Combos" ese inicio es el combo armable, no la
+  // grilla — si este efecto también scrolleaba, tapaba ese primer combo
+  // saltando directo a la grilla de abajo.
   // Búsqueda y precio quedan afuera a propósito: son inputs continuos
   // (tipear, arrastrar) donde mover la pantalla en cada cambio molestaría.
   useEffect(() => {
+    const categoryChanged = prevActiveCategory.current !== activeCategory;
+    prevActiveCategory.current = activeCategory;
     const key = `${catalogPage}|${activeGender}|${activeFamily}|${activeCategory}`;
-    if (prevCatalogFilterKey.current !== key) {
+    if (!categoryChanged && prevCatalogFilterKey.current !== key) {
       catalogGridRef.current?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
     }
     prevCatalogFilterKey.current = key;
