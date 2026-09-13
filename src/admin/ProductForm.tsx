@@ -12,6 +12,60 @@ function isPostgresError(value: unknown): value is { code?: string; message?: st
   return typeof value === 'object' && value !== null && ('code' in value || 'message' in value);
 }
 
+const MAX_IMAGE_DIMENSION = 1600;
+
+// Redimensiona a WebP liviano (mismo criterio que scripts/optimize-images.mjs) y calcula
+// el color dominante de los pixeles opacos, para que la tarjeta del catálogo combine con
+// la foto sin que la clienta tenga que elegir un color a mano.
+async function processImage(file: File): Promise<{ blob: Blob; accent: string }> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('No se pudo procesar la imagen.');
+  ctx.drawImage(bitmap, 0, 0, width, height);
+
+  const { data } = ctx.getImageData(0, 0, width, height);
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+  for (let i = 0; i < data.length; i += 4 * 7) {
+    if (data[i + 3] > 200) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      count += 1;
+    }
+  }
+  const accent =
+    count > 0
+      ? `#${[r, g, b].map((value) => Math.round(value / count).toString(16).padStart(2, '0')).join('')}`
+      : '#c99558';
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('No se pudo procesar la imagen.'))), 'image/webp', 0.85);
+  });
+
+  return { blob, accent };
+}
+
+// La clienta tipea con puntos, comas o "·" pegados y sin mayúscula ("lichi.bergamota.sandalo").
+// Esto separa por cualquiera de esos signos y arma siempre el mismo formato prolijo.
+function normalizeList(value: string): string {
+  return value
+    .split(/[,.·]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' · ');
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -59,10 +113,11 @@ type Props = { product: Perfume | null; onDone: () => void; onCancel: () => void
 
 function ProductForm({ product, onDone, onCancel }: Props) {
   const [form, setForm] = useState<FormState>(product ? fromProduct(product) : emptyForm());
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<Blob | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(product?.image ?? null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [processingImage, setProcessingImage] = useState(false);
   const [familyOptions, setFamilyOptions] = useState<string[]>([]);
   const [brandOptions, setBrandOptions] = useState<string[]>([]);
   const [isNewBrand, setIsNewBrand] = useState(false);
@@ -111,7 +166,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
       ? [...familyOptions, form.family].sort((a, b) => a.localeCompare(b))
       : familyOptions;
 
-  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -123,15 +178,23 @@ function ProductForm({ product, onDone, onCancel }: Props) {
       return;
     }
     setError(null);
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    setProcessingImage(true);
+    try {
+      const { blob, accent } = await processImage(file);
+      setImageFile(blob);
+      setImagePreview(URL.createObjectURL(blob));
+      setForm((current) => ({ ...current, accent }));
+    } catch {
+      setError('No se pudo procesar esa imagen, probá con otra.');
+    } finally {
+      setProcessingImage(false);
+    }
   };
 
   const uploadImage = async (id: string): Promise<string> => {
     if (!supabase || !imageFile) throw new Error('Falta la foto.');
-    const extension = imageFile.name.split('.').pop() ?? 'png';
-    const path = `${id}-${Date.now()}.${extension}`;
-    const { error: uploadError } = await supabase.storage.from('product-images').upload(path, imageFile, { upsert: true });
+    const path = `${id}-${Date.now()}.webp`;
+    const { error: uploadError } = await supabase.storage.from('product-images').upload(path, imageFile, { upsert: true, contentType: 'image/webp' });
     if (uploadError) throw uploadError;
     const { data } = supabase.storage.from('product-images').getPublicUrl(path);
     return data.publicUrl;
@@ -162,8 +225,8 @@ function ProductForm({ product, onDone, onCancel }: Props) {
 
     setSaving(true);
     try {
-      const family = isPerfume ? form.family.trim() : form.subtitle.trim();
-      const notes = isPerfume ? form.notes.trim() : form.subtitle.trim();
+      const family = isPerfume ? form.family.trim() : normalizeList(form.subtitle.trim());
+      const notes = isPerfume ? normalizeList(form.notes.trim()) : normalizeList(form.subtitle.trim());
 
       if (!product) {
         const baseId = slugify(form.name);
@@ -175,7 +238,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
         const { error: insertError } = await supabase.from('perfumes').insert({
           id: baseId,
           name: form.name.trim(),
-          subtitle: form.subtitle.trim(),
+          subtitle: normalizeList(form.subtitle.trim()),
           category: form.category,
           brand: form.brand.trim(),
           family,
@@ -194,7 +257,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
           .from('perfumes')
           .update({
             name: form.name.trim(),
-            subtitle: form.subtitle.trim(),
+            subtitle: normalizeList(form.subtitle.trim()),
             category: form.category,
             brand: form.brand.trim(),
             family,
@@ -225,7 +288,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
   };
 
   const previewFamily = form.family || (isPerfume ? 'Familia olfativa' : form.category);
-  const previewNotes = (isPerfume ? form.notes : form.subtitle) || 'Así se ven las notas acá';
+  const previewNotes = normalizeList(isPerfume ? form.notes : form.subtitle) || 'Así se ven las notas acá';
 
   return (
     <div className="min-h-screen bg-[#0b0b0a] px-5 py-10 text-[#f2eee7] md:px-12">
@@ -241,7 +304,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
             </div>
             <div>
               <label className="block text-xs uppercase tracking-wide text-white/50">Subtítulo</label>
-              <p className="mt-1 text-xs text-white/40">Una frase corta, ej. "Dulce · floral".</p>
+              <p className="mt-1 text-xs text-white/40">Una frase corta. Si tiene varias ideas, separalas por coma: ej. "Dulce, floral".</p>
               <input required value={form.subtitle} onChange={(event) => setForm({ ...form, subtitle: event.target.value })} className="mt-2 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]" />
             </div>
             <div>
@@ -315,7 +378,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
                 </div>
                 <div>
                   <label className="block text-xs uppercase tracking-wide text-white/50">Notas</label>
-                  <p className="mt-1 text-xs text-white/40">Separadas por "·", ej. "Canela · dátiles · vainilla".</p>
+                  <p className="mt-1 text-xs text-white/40">Separadas por coma, ej. "Canela, dátiles, vainilla". Se acomodan solas.</p>
                   <input required={isPerfume} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} className="mt-2 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-3 text-sm outline-none focus:border-[#c99558]" />
                 </div>
               </>
@@ -336,18 +399,19 @@ function ProductForm({ product, onDone, onCancel }: Props) {
             </div>
             <p className="text-xs uppercase tracking-wide text-[#c99558] md:col-span-2">Imagen y color</p>
             <div>
-              <label className="block text-xs uppercase tracking-wide text-white/50">Color de acento</label>
-              <p className="mt-1 text-xs text-white/40">Elegí el tono que más se parece al frasco.</p>
-              <input type="color" value={form.accent} onChange={(event) => setForm({ ...form, accent: event.target.value })} className="mt-2 h-11 w-20 cursor-pointer rounded-lg border border-white/15 bg-transparent" />
+              <label className="block text-xs uppercase tracking-wide text-white/50">Foto</label>
+              <p className="mt-1 text-xs text-white/40">Recortada, con fondo transparente (como las que ya tenés). La comprimimos y elegimos el color de la tarjeta automáticamente.</p>
+              <input type="file" accept="image/*" onChange={handleImageChange} className="mt-2 w-full text-sm text-white/70 file:mr-4 file:rounded-full file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:uppercase file:text-white" />
+              {processingImage && <p className="mt-2 text-xs text-[#c99558]">Procesando la foto...</p>}
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wide text-white/50">Foto</label>
-              <p className="mt-1 text-xs text-white/40">Fondo negro, igual que el resto del catálogo.</p>
-              <input type="file" accept="image/*" onChange={handleImageChange} className="mt-2 w-full text-sm text-white/70 file:mr-4 file:rounded-full file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:uppercase file:text-white" />
+              <label className="block text-xs uppercase tracking-wide text-white/50">Color de acento</label>
+              <p className="mt-1 text-xs text-white/40">Se calcula solo a partir de la foto. Tocalo solo si no te convence.</p>
+              <input type="color" value={form.accent} onChange={(event) => setForm({ ...form, accent: event.target.value })} className="mt-2 h-11 w-20 cursor-pointer rounded-lg border border-white/15 bg-transparent" />
             </div>
             {error && <p className="text-sm text-red-400 md:col-span-2">{error}</p>}
             <div className="flex gap-3 md:col-span-2">
-              <button type="submit" disabled={saving} className="rounded-full bg-[#c99558] px-6 py-3 text-xs font-semibold uppercase tracking-wide text-black transition hover:bg-[#dba86c] disabled:opacity-50">
+              <button type="submit" disabled={saving || processingImage} className="rounded-full bg-[#c99558] px-6 py-3 text-xs font-semibold uppercase tracking-wide text-black transition hover:bg-[#dba86c] disabled:opacity-50">
                 {saving ? 'Guardando...' : 'Guardar'}
               </button>
               <button type="button" onClick={onCancel} className="rounded-full border border-white/20 px-6 py-3 text-xs uppercase tracking-wide text-white/70 hover:text-white">
@@ -370,7 +434,7 @@ function ProductForm({ product, onDone, onCancel }: Props) {
                 </div>
                 <p className="mt-5 text-[10px] uppercase tracking-[0.25em] text-white/70">{previewFamily}{form.gender ? ` · ${form.gender}` : ''}</p>
                 <h3 className="mt-2 font-serif text-3xl leading-none tracking-[-0.04em]">{form.name || 'Nombre del producto'}</h3>
-                <p className="mt-2 text-sm text-white/70">{form.subtitle || 'Subtítulo'}</p>
+                <p className="mt-2 text-sm text-white/70">{normalizeList(form.subtitle) || 'Subtítulo'}</p>
                 <p className="mt-4 text-sm leading-6 text-white/85">{form.description || 'Acá va a aparecer la descripción que escribas más abajo.'}</p>
                 <div className="my-5 border-y border-white/20 py-4 text-xs">
                   <div className="flex justify-between gap-4"><span className="shrink-0 text-white/60">Notas</span><span className="text-right text-white/90">{previewNotes}</span></div>

@@ -67,3 +67,7 @@ CLAUDE.local.md
 # estado generado semana a semana, no es codigo fuente.
 .claude/analytics-history/
 reporte-analytics-*.html
+
+# Estado del hook de aviso de catalogo (check-catalog-updates.cjs) -- guarda
+# el ultimo producto visto para comparar, no es codigo fuente.
+.claude/catalog-last-check.local.json
