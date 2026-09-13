@@ -42,6 +42,10 @@ CLAUDE.local.md
 /fotos-clienta
 .gstack/
 
+# contenido para redes (fichas de perfumes, fotos generadas para IG) --
+# material de marketing, no pertenece al historial de codigo del sitio
+/para-redes
+
 # backup local de fotos PNG originales (2026-08-28, ya preservadas en el
 # historial de git de antes de la conversion a webp; no duplicar en el repo)
 /assets-originales-fotos-perfumes
@@ -54,3 +58,12 @@ CLAUDE.local.md
 
 # Claude Code — estado local de la skill de brainstorming
 /.superpowers
+
+# Claves de solo-lectura de analytics (PostHog/Cloudflare) para que Claude
+# consulte trafico sin que Facu entre a los paneles. Nunca se comitean.
+.claude/analytics-tokens.local.json
+
+# Historial de snapshots del agente de analytics (scripts/analizar-ag.mjs) --
+# estado generado semana a semana, no es codigo fuente.
+.claude/analytics-history/
+reporte-analytics-*.html

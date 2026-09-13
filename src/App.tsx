@@ -23,6 +23,8 @@ type Variant = {
   name: string;
   notes: string;
   image: string;
+  images?: string[];
+  names?: string[];
 };
 
 export type ProductCategory = 'Perfume' | 'Combo' | "Victoria's Secret";
@@ -109,6 +111,15 @@ const categoryMeta: { value: ProductCategory; label: string }[] = [
 
 const genderMeta: Gender[] = ['Mujer', 'Hombre', 'Unisex'];
 
+// Combo "armá el tuyo": 2 perfumes + 1 body splash a elección, precio fijo.
+// Productos reales ya cargados en Supabase — confirmado con Facu 2026-09-12.
+// Precio en $145.000 (no $160.000): a $160.000, 10 de las 21 combinaciones posibles de
+// perfumes no dejaban ahorro real (5 empataban, 5 salían más caras que comprar suelto).
+// A $145.000 las 21 combinaciones ahorran siempre — confirmado con Gisela 2026-09-12.
+const COMBO_PERFUME_IDS = ['lattafa-angham', 'lattafa-yara-moi', 'lattafa-badee-al-oud-sublime', 'lattafa-mayar', 'lattafa-hayaati-florence', 'lattafa-yara-rosa', 'now-women'];
+const COMBO_BODY_IDS = ['victorias-secret-bare-vanilla', 'victorias-secret-coconut-passion', 'victorias-secret-love-spell-shimmer', 'victorias-secret-pure-seduction'];
+const COMBO_PRICE = 145000;
+
 const LETTER_STAGGER = 0.028;
 
 // Anima el texto letra por letra al montar; baseDelay retrasa el arranque de la segunda
@@ -144,9 +155,12 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<Record<string, string>>({});
+  const [comboPerfumeIds, setComboPerfumeIds] = useState<string[]>([]);
+  const [comboBodyId, setComboBodyId] = useState('');
+  const [comboPickContext, setComboPickContext] = useState<'perfume' | 'body' | null>(null);
   const dragStartY = useRef<number | null>(null);
   const dragYRef = useRef(0);
-  const prevCatalogPage = useRef(catalogPage);
+  const prevCatalogFilterKey = useRef(`${catalogPage}|${activeGender}|${activeFamily}|${activeCategory}`);
   const toastTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const catalogGridRef = useRef<HTMLDivElement>(null);
@@ -193,6 +207,8 @@ function App() {
   }, [selectedProduct, isCartOpen]);
 
   const perfumeOnly = useMemo(() => perfumes.filter((perfume) => getCategory(perfume) === 'Perfume'), [perfumes]);
+  const comboPerfumeOptions = useMemo(() => perfumes.filter((perfume) => COMBO_PERFUME_IDS.includes(perfume.id)), [perfumes]);
+  const comboBodyOptions = useMemo(() => perfumes.filter((perfume) => COMBO_BODY_IDS.includes(perfume.id)), [perfumes]);
   const families = useMemo(() => ['Todos', ...Array.from(new Set(perfumeOnly.map((perfume) => perfume.family)))], [perfumeOnly]);
   const marqueeBrands = useMemo(() => Array.from(new Set(perfumes.map((perfume) => perfume.brand).filter((brand): brand is string => Boolean(brand)))).sort(), [perfumes]);
   const macroFamilyNames = useMemo(() => familyMeta.map((meta) => meta.name), []);
@@ -255,6 +271,8 @@ function App() {
   const cartTotal = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
   const selectedModalVariants = selectedProduct ? getVariants(selectedProduct) : [];
   const selectedModalVariant = selectedProduct ? (selectedModalVariants.find((variant) => variant.id === selectedVariantId[selectedProduct.id]) ?? selectedModalVariants[0]) : null;
+  const comboPickedInModal = selectedProduct && comboPickContext ? (comboPickContext === 'perfume' ? comboPerfumeIds.includes(selectedProduct.id) : comboBodyId === selectedProduct.id) : false;
+  const comboPickFullInModal = comboPickContext === 'perfume' && !comboPickedInModal && comboPerfumeIds.length >= 2;
 
   const getSelectedVariant = (perfume: Perfume): Variant => {
     const variants = getVariants(perfume);
@@ -308,12 +326,13 @@ function App() {
     });
   };
 
-  const openProduct = (product: Perfume) => {
+  const openProduct = (product: Perfume, comboKind: 'perfume' | 'body' | null = null) => {
     setIsClosing(false);
     setIsDragging(false);
     setDragY(0);
     dragYRef.current = 0;
     setSelectedProduct(product);
+    setComboPickContext(comboKind);
     posthog.capture('product_viewed', {
       product_id: product.id,
       product_name: product.name,
@@ -366,12 +385,66 @@ function App() {
     openCart('after_add_from_modal');
   };
 
+  const toggleComboPerfume = (id: string) => {
+    setComboPerfumeIds((current) => {
+      if (current.includes(id)) return current.filter((existing) => existing !== id);
+      if (current.length >= 2) return current;
+      return [...current, id];
+    });
+  };
+
+  const pickForCombo = (product: Perfume, kind: 'perfume' | 'body') => {
+    if (kind === 'perfume') toggleComboPerfume(product.id);
+    else setComboBodyId((current) => (current === product.id ? '' : product.id));
+    closeProduct();
+  };
+
+  const addComboToCart = () => {
+    const perfume1 = perfumes.find((perfume) => perfume.id === comboPerfumeIds[0]);
+    const perfume2 = perfumes.find((perfume) => perfume.id === comboPerfumeIds[1]);
+    const body = perfumes.find((perfume) => perfume.id === comboBodyId);
+    if (!perfume1 || !perfume2 || !body) return;
+    const comboProduct: Perfume = {
+      id: 'combo-2-perfumes-1-body',
+      name: 'Combo 2 Perfumes + 1 Body Splash',
+      subtitle: 'Armado a elección',
+      family: 'Combo',
+      notes: '',
+      price: COMBO_PRICE,
+      volume: '2 x 100 ml + 1 x 250 ml',
+      accent: perfume1.accent,
+      image: perfume1.image,
+      description: 'Elegís 2 perfumes y 1 body splash Victoria\'s Secret, y te llevás los 3 a este precio fijo.',
+      category: 'Combo',
+    };
+    const variant: Variant = {
+      id: `${perfume1.id}_${perfume2.id}_${body.id}`,
+      name: `${perfume1.name} + ${perfume2.name} + ${body.name}`,
+      notes: `${perfume1.notes} · ${perfume2.notes} · ${body.notes}`,
+      image: perfume1.image,
+      images: [perfume1.image, perfume2.image, body.image],
+      names: [perfume1.name, perfume2.name, body.name],
+    };
+    addToCart(comboProduct, variant, 'modal');
+    setComboPerfumeIds([]);
+    setComboBodyId('');
+    openCart('after_add_from_modal');
+  };
+
+  // Dispara scroll hacia el catálogo cuando cambia la página O cualquier
+  // filtro de click (género/familia/categoría) — antes solo miraba la
+  // página, así que aplicar un filtro estando ya en la página 1 no movía
+  // la pantalla y parecía que el filtro no había hecho nada (dead click
+  // en PostHog: 8 de 37 en la semana del 12/9 eran justo estos filtros).
+  // Búsqueda y precio quedan afuera a propósito: son inputs continuos
+  // (tipear, arrastrar) donde mover la pantalla en cada cambio molestaría.
   useEffect(() => {
-    if (prevCatalogPage.current !== catalogPage) {
+    const key = `${catalogPage}|${activeGender}|${activeFamily}|${activeCategory}`;
+    if (prevCatalogFilterKey.current !== key) {
       catalogGridRef.current?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
     }
-    prevCatalogPage.current = catalogPage;
-  }, [catalogPage]);
+    prevCatalogFilterKey.current = key;
+  }, [catalogPage, activeGender, activeFamily, activeCategory]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -449,12 +522,59 @@ function App() {
               </div>
             </div>
             {activeCategory === 'Perfume' && !isSearching && <div className="mb-12 flex gap-2 overflow-x-auto pb-2">{families.map((family) => <button key={family} onClick={() => setActiveFamilyAndResetPage(family)} className={`inline-flex min-h-[44px] items-center whitespace-nowrap rounded-full border px-4 text-[10px] uppercase tracking-[0.17em] transition ${activeFamily === family ? 'border-[#c99558] bg-[#c99558] text-[#151412]' : 'border-black/20 text-black/55 hover:border-black/60'}`}>{family}</button>)}</div>}
+            {activeCategory === 'Combo' && !isSearching && <div className="mb-14">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-[#6b4a26]">Armá tu combo</p>
+              <div className="flex flex-wrap items-center gap-4">
+                <h3 className="font-serif text-4xl tracking-[-0.03em] text-[#151412] md:text-6xl">2 perfumes + 1 body splash</h3>
+                <span className="inline-flex items-center rounded-full bg-[#c99558] px-5 py-2.5 text-lg font-bold text-black md:text-2xl">{formatPrice(COMBO_PRICE)}</span>
+              </div>
+              <p className="mt-4 max-w-md text-sm leading-6 text-black/55">Elegí 2 perfumes y 1 body splash Victoria's Secret. Los 3 juntos, a este precio fijo.</p>
+              <div className="mt-8">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-black/70">Elegí 2 perfumes ({comboPerfumeIds.length}/2)</p>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {comboPerfumeOptions.map((perfume, index) => {
+                    const selected = comboPerfumeIds.includes(perfume.id);
+                    const dimmed = !selected && comboPerfumeIds.length >= 2;
+                    return <article key={perfume.id} onClick={() => openProduct(perfume, 'perfume')} className={`group relative min-h-[480px] cursor-pointer overflow-hidden p-7 text-white transition ${dimmed ? 'opacity-40' : ''} ${selected ? 'ring-2 ring-[#c99558] grayscale' : ''}`} style={{ background: `linear-gradient(145deg, ${perfume.accent}, #151515 120%)` }}>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(255,255,255,.2),transparent_25%)] opacity-70" />
+                      {selected && <span className="absolute left-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#c99558] text-black"><Check size={16} /></span>}
+                      <div className="relative z-10 flex h-full flex-col">
+                        <div className="flex justify-end text-[10px] uppercase tracking-[0.2em] text-white/65"><span>{perfume.family}</span></div>
+                        <div className="relative min-h-0 flex-1 py-3"><div className="flex h-full w-full animate-card-float items-center justify-center" style={{ '--float-delay': `${(index % 3) * -1.1}s` } as CSSProperties}><img src={perfume.image} alt={perfume.name} className="max-h-full max-w-[85%] object-contain drop-shadow-[0_28px_25px_rgba(0,0,0,.48)] transition duration-700 group-hover:scale-105 group-hover:-translate-y-[6%]" /></div></div>
+                        <div className="relative shrink-0"><p className="mb-2 text-xs text-white/65">{perfume.notes}</p><h3 className={`font-serif tracking-[-0.04em] ${perfume.name.length > 22 ? 'text-xl' : 'text-3xl'}`}>{perfume.name}</h3></div>
+                      </div>
+                    </article>;
+                  })}
+                </div>
+              </div>
+              <div className="mt-10 border-t border-black/10 pt-8">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-black/70">Elegí 1 body splash</p>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {comboBodyOptions.map((perfume, index) => {
+                    const selected = comboBodyId === perfume.id;
+                    return <article key={perfume.id} onClick={() => openProduct(perfume, 'body')} className={`group relative min-h-[480px] cursor-pointer overflow-hidden p-7 text-white transition ${selected ? 'ring-2 ring-[#c99558] grayscale' : ''}`} style={{ background: `linear-gradient(145deg, ${perfume.accent}, #151515 120%)` }}>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(255,255,255,.2),transparent_25%)] opacity-70" />
+                      {selected && <span className="absolute left-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#c99558] text-black"><Check size={16} /></span>}
+                      <div className="relative z-10 flex h-full flex-col">
+                        <div className="flex justify-end text-[10px] uppercase tracking-[0.2em] text-white/65"><span>{perfume.volume}</span></div>
+                        <div className="relative min-h-0 flex-1 py-3"><div className="flex h-full w-full animate-card-float items-center justify-center" style={{ '--float-delay': `${(index % 3) * -1.1}s` } as CSSProperties}><img src={perfume.image} alt={perfume.name} className="max-h-full max-w-[85%] object-contain drop-shadow-[0_28px_25px_rgba(0,0,0,.48)] transition duration-700 group-hover:scale-105 group-hover:-translate-y-[6%]" /></div></div>
+                        <div className="relative shrink-0"><p className="mb-2 text-xs text-white/65">{perfume.notes}</p><h3 className={`font-serif tracking-[-0.04em] ${perfume.name.length > 22 ? 'text-xl' : 'text-3xl'}`}>{perfume.name}</h3></div>
+                      </div>
+                    </article>;
+                  })}
+                </div>
+              </div>
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-black/10 pt-6">
+                <span className="text-xl text-[#151412]">{formatPrice(COMBO_PRICE)}</span>
+                <button onClick={addComboToCart} disabled={comboPerfumeIds.length < 2 || !comboBodyId} className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#c99558] px-6 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-black transition hover:bg-[#dba86c] disabled:cursor-not-allowed disabled:opacity-30">Agregar combo al carrito</button>
+              </div>
+            </div>}
             {paginatedPerfumes.length === 0 && <p className="mb-12 text-sm text-black/45">No encontramos productos con esos filtros. Probá ajustar la búsqueda, la categoría o el rango de precio.</p>}
-            <div ref={catalogGridRef} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{paginatedPerfumes.map((perfume, index) => { const variants = getVariants(perfume); const selected = getSelectedVariant(perfume); return <article key={perfume.id} onClick={() => openProduct(perfume)} className="group relative min-h-[480px] cursor-pointer overflow-hidden p-7 text-white" style={{ background: `linear-gradient(145deg, ${perfume.accent}, #151515 120%)` }}><div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(255,255,255,.2),transparent_25%)] opacity-70" /><div className="relative z-10 flex h-full flex-col justify-between"><div className="flex justify-between text-[10px] uppercase tracking-[0.2em] text-white/65"><span>{String((catalogPage - 1) * CATALOG_PAGE_SIZE + index + 1).padStart(2, '0')} / {String(visiblePerfumes.length).padStart(2, '0')}</span><span>{perfume.family}{perfume.gender ? ` · ${perfume.gender}` : ''}</span></div><div className="absolute left-1/2 top-1/2 h-[66%] w-[92%] -translate-x-1/2 -translate-y-1/2"><div className="h-full w-full animate-card-float" style={{ '--float-delay': `${(index % 3) * -1.1}s` } as CSSProperties}><img src={selected.image} alt={selected.name} className="h-full w-full object-contain drop-shadow-[0_28px_25px_rgba(0,0,0,.48)] transition duration-700 group-hover:scale-105 group-hover:-translate-y-[6%]" /></div></div><div className="relative mt-auto"><p className="mb-2 text-xs text-white/65">{selected.notes}</p><h3 className="font-serif text-3xl tracking-[-0.04em]">{perfume.name}</h3>{variants.length > 1 && <div onClick={(event) => event.stopPropagation()} className="mt-3 flex flex-wrap gap-1.5">{variants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariantId((current) => ({ ...current, [perfume.id]: variant.id }))} className={`rounded-full border px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] transition ${selected.id === variant.id ? 'border-white bg-white/20 text-white' : 'border-white/25 text-white/55 hover:border-white/50'}`}>{variant.name}</button>)}</div>}<div className="mt-5 flex items-center justify-between border-t border-white/20 pt-4"><span className="text-sm">{formatPrice(perfume.price)}</span><button onClick={(event) => quickAdd(event, perfume)} className="inline-flex min-h-[44px] items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] transition hover:text-[#f2c891]"><Plus size={15} /> Agregar</button></div></div></div></article>; })}</div>
+            <div ref={catalogGridRef} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{paginatedPerfumes.map((perfume, index) => { const variants = getVariants(perfume); const selected = getSelectedVariant(perfume); return <article key={perfume.id} onClick={() => openProduct(perfume)} className="group relative min-h-[480px] cursor-pointer overflow-hidden p-7 text-white" style={{ background: `linear-gradient(145deg, ${perfume.accent}, #151515 120%)` }}><div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(255,255,255,.2),transparent_25%)] opacity-70" /><div className="relative z-10 flex h-full flex-col"><div className="flex justify-between text-[10px] uppercase tracking-[0.2em] text-white/65"><span>{String((catalogPage - 1) * CATALOG_PAGE_SIZE + index + 1).padStart(2, '0')} / {String(visiblePerfumes.length).padStart(2, '0')}</span><span>{perfume.family}{perfume.gender ? ` · ${perfume.gender}` : ''}</span></div><div className="relative min-h-0 flex-1 py-3"><div className="flex h-full w-full animate-card-float items-center justify-center" style={{ '--float-delay': `${(index % 3) * -1.1}s` } as CSSProperties}><img src={selected.image} alt={selected.name} className="max-h-full max-w-[85%] object-contain drop-shadow-[0_28px_25px_rgba(0,0,0,.48)] transition duration-700 group-hover:scale-105 group-hover:-translate-y-[6%]" /></div></div><div className="relative shrink-0"><p className="mb-2 text-xs text-white/65">{selected.notes}</p><h3 className={`font-serif tracking-[-0.04em] ${perfume.name.length > 22 ? 'text-xl' : 'text-3xl'}`}>{perfume.name}</h3>{variants.length > 1 &&<div onClick={(event) => event.stopPropagation()} className="mt-3 flex flex-wrap gap-1.5">{variants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariantId((current) => ({ ...current, [perfume.id]: variant.id }))} className={`rounded-full border px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] transition ${selected.id === variant.id ? 'border-white bg-white/20 text-white' : 'border-white/25 text-white/55 hover:border-white/50'}`}>{variant.name}</button>)}</div>}<div className="mt-5 flex items-center justify-between border-t border-white/20 pt-4"><span className="text-sm">{formatPrice(perfume.price)}</span><button onClick={(event) => quickAdd(event, perfume)} className="inline-flex min-h-[44px] items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] transition hover:text-[#f2c891]"><Plus size={15} /> Agregar</button></div></div></div></article>; })}</div>
             {catalogTotalPages > 1 && <div className="mt-12 flex items-center justify-center gap-2 sm:gap-6">
-              <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.max(1, page - 1)); }} disabled={catalogPage === 1} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-30">Anterior</button>
+              {catalogPage > 1 && <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.max(1, page - 1)); }} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black">Anterior</button>}
               <div className="flex items-center">{Array.from({ length: catalogTotalPages }, (_, i) => i + 1).map((page) => <button key={page} onClick={(event) => { event.currentTarget.blur(); setCatalogPage(page); }} aria-label={`Pagina ${page}`} className="relative flex h-11 w-8 items-center justify-center sm:w-11"><span className={`h-2 w-2 rounded-full transition ${page === catalogPage ? 'bg-[#151412]' : 'bg-black/20 hover:bg-black/40'}`} /></button>)}</div>
-              <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.min(catalogTotalPages, page + 1)); }} disabled={catalogPage === catalogTotalPages} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-30">Siguiente</button>
+              {catalogPage < catalogTotalPages && <button onClick={(event) => { event.currentTarget.blur(); setCatalogPage((page) => Math.min(catalogTotalPages, page + 1)); }} className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] text-black/55 transition hover:text-black">Siguiente</button>}
             </div>}
           </div>
         </section>
@@ -479,9 +599,25 @@ function App() {
         <section id="contacto" className="border-t border-white/10 bg-[#0b0b0a] px-5 py-16 md:px-12"><div className="mx-auto grid max-w-[1440px] gap-10 border-b border-white/10 pb-16 md:grid-cols-3"><div className="flex gap-4"><Truck className="text-[#c99558]" size={20} /><div><h3 className="text-sm">Envíos a todo el país</h3><p className="mt-2 text-xs text-white/45">Despachamos tu pedido con cuidado.</p></div></div><div className="flex gap-4"><Sparkles className="text-[#c99558]" size={20} /><div><h3 className="text-sm">100% originales</h3><p className="mt-2 text-xs text-white/45">Fragancias elegidas por su calidad.</p></div></div><div className="flex gap-4"><MessageCircle className="text-[#c99558]" size={20} /><div><h3 className="text-sm">Atención cercana</h3><p className="mt-2 text-xs text-white/45">Te ayudamos a encontrar tu aroma.</p></div></div></div><footer className="mx-auto flex max-w-[1440px] flex-col justify-between gap-8 pt-12 md:flex-row md:items-end"><div><p className="font-serif text-3xl tracking-[-0.05em]">A&G <span className="text-[#c99558]">Perfumes</span></p><p className="mt-3 text-xs text-white/35">Perfumería árabe · Buenos Aires</p></div><div className="flex items-center gap-5 text-white/45"><a href="#inicio" className="inline-flex min-h-[44px] items-center text-[10px] uppercase tracking-[0.2em] transition hover:text-white">Volver arriba</a><a href="https://www.instagram.com/giselafabiana.maidana/" target="_blank" rel="noreferrer" className="flex h-11 w-11 items-center justify-center"><Instagram size={17} /></a><a href={`https://wa.me/5491124578934?text=${encodeURIComponent('Hola A&G Perfumes! Quería hacer una consulta.')}`} target="_blank" rel="noreferrer" className="flex h-11 w-11 items-center justify-center"><MessageCircle size={17} /></a></div></footer></section>
       </main>
 
-      {selectedProduct && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 md:items-center md:p-4 animate-backdrop-pop" onClick={closeProduct}><div className={`w-full max-w-3xl ${isClosing ? 'animate-bubble-out' : 'animate-bubble-in'}`}><div className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden text-white shadow-2xl md:grid md:max-h-[90dvh] md:grid-cols-2" style={{ background: `linear-gradient(145deg, ${selectedProduct.accent}, #0b0b0a 130%)`, transform: dragY ? `translateY(${dragY}px)` : undefined, transition: isDragging ? 'none' : 'transform 0.25s ease-out' }} onClick={(event) => event.stopPropagation()}><div className="flex justify-center pb-1 pt-3 md:hidden" onTouchStart={handleDragStart} onTouchMove={handleDragMove} onTouchEnd={handleDragEnd} onTouchCancel={handleDragEnd}><div className="h-1 w-10 rounded-full bg-white/25" /></div><button onClick={closeProduct} aria-label="Cerrar" className="absolute right-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition hover:bg-white/20"><X size={17} /></button><div className="relative flex h-[38dvh] shrink-0 items-center justify-center overflow-hidden p-6 sm:h-[42dvh] md:h-auto md:min-h-[360px] md:p-8" style={{ background: `radial-gradient(circle at 50% 45%, ${selectedProduct.accent}55, transparent 70%)` }} onTouchStart={handleDragStart} onTouchMove={handleDragMove} onTouchEnd={handleDragEnd} onTouchCancel={handleDragEnd}><div className="absolute inset-0 opacity-30" style={{ background: `radial-gradient(circle at 30% 70%, ${selectedProduct.accent}40, transparent 50%)` }} /><div className="relative z-10 flex h-full w-full scale-125 items-center justify-center"><img src={selectedModalVariant!.image} alt={selectedModalVariant!.name} className="h-full max-h-[430px] w-full object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,.6)] animate-product-float" /></div></div><div className="relative flex min-h-0 flex-1 flex-col md:overflow-hidden"><div className="absolute inset-0 opacity-20" style={{ background: `linear-gradient(160deg, ${selectedProduct.accent}30, transparent 60%)` }} /><div className="relative z-10 flex-1 overflow-y-auto overscroll-y-contain p-6 pb-4 md:p-12 md:pb-0"><p className="text-[10px] uppercase tracking-[0.25em] text-white/55">{selectedProduct.family}{selectedProduct.gender ? ` · ${selectedProduct.gender}` : ''}</p><h2 className="mt-4 font-serif text-4xl leading-none tracking-[-0.06em] sm:text-5xl">{selectedProduct.name}</h2><p className="mt-3 text-sm text-white/55">{selectedProduct.subtitle}</p>{selectedModalVariants.length > 1 && <div className="mt-5 flex flex-wrap gap-2">{selectedModalVariants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariantId((current) => ({ ...current, [selectedProduct.id]: variant.id }))} className={`rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition ${selectedModalVariant!.id === variant.id ? 'border-white bg-white/20 text-white' : 'border-white/25 text-white/55 hover:border-white/50'}`}>{variant.name}</button>)}</div>}<p className="mt-6 text-sm leading-6 text-white/70 sm:mt-8">{selectedProduct.description}</p><div className="my-6 border-y border-white/15 py-5 text-xs sm:my-8"><div className="flex justify-between"><span className="text-white/50">Notas</span><span className="text-right text-white/80">{selectedModalVariant!.notes}</span></div><div className="mt-4 flex justify-between"><span className="text-white/50">Tamaño</span><span className="text-white/80">{selectedProduct.volume}</span></div></div></div><div className="relative z-10 shrink-0 border-t border-white/10 p-6 md:border-0 md:p-12 md:pt-0"><div className="flex items-center justify-between"><span className="text-xl">{formatPrice(selectedProduct.price)}</span><button onClick={() => addFromModal(selectedProduct, selectedModalVariant!)} className="rounded-full bg-[#c99558] px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-black transition hover:bg-[#dba86c]">Agregar al carrito</button></div></div></div></div></div></div>}
+      {selectedProduct && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 md:items-center md:p-4 animate-backdrop-pop" onClick={closeProduct}><div className={`w-full max-w-3xl ${isClosing ? 'animate-bubble-out' : 'animate-bubble-in'}`}><div className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden text-white shadow-2xl md:grid md:max-h-[90dvh] md:grid-cols-2" style={{ background: `linear-gradient(145deg, ${selectedProduct.accent}, #0b0b0a 130%)`, transform: dragY ? `translateY(${dragY}px)` : undefined, transition: isDragging ? 'none' : 'transform 0.25s ease-out' }} onClick={(event) => event.stopPropagation()}><div className="flex justify-center pb-1 pt-3 md:hidden" onTouchStart={handleDragStart} onTouchMove={handleDragMove} onTouchEnd={handleDragEnd} onTouchCancel={handleDragEnd}><div className="h-1 w-10 rounded-full bg-white/25" /></div><button onClick={closeProduct} aria-label="Cerrar" className="absolute right-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition hover:bg-white/20"><X size={17} /></button><div className="relative flex h-[38dvh] shrink-0 items-center justify-center overflow-hidden p-6 sm:h-[42dvh] md:h-auto md:min-h-[360px] md:p-8" style={{ background: `radial-gradient(circle at 50% 45%, ${selectedProduct.accent}55, transparent 70%)` }} onTouchStart={handleDragStart} onTouchMove={handleDragMove} onTouchEnd={handleDragEnd} onTouchCancel={handleDragEnd}><div className="absolute inset-0 opacity-30" style={{ background: `radial-gradient(circle at 30% 70%, ${selectedProduct.accent}40, transparent 50%)` }} /><div className="relative z-10 flex h-full w-full scale-125 items-center justify-center"><img src={selectedModalVariant!.image} alt={selectedModalVariant!.name} className="h-full max-h-[430px] w-full object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,.6)] animate-product-float" /></div></div><div className="relative flex min-h-0 flex-1 flex-col md:overflow-hidden"><div className="absolute inset-0" style={{ background: 'linear-gradient(165deg, rgba(11,11,10,.62), rgba(11,11,10,.9))' }} /><div className="relative z-10 flex-1 overflow-y-auto overscroll-y-contain p-6 pb-4 md:p-12 md:pb-0">{comboPickContext && <p className="mb-3 text-[10px] uppercase tracking-[0.25em] text-[#c99558]">{comboPickContext === 'perfume' ? `Para tu combo · perfume ${comboPickedInModal ? comboPerfumeIds.indexOf(selectedProduct.id) + 1 : Math.min(comboPerfumeIds.length + 1, 2)} de 2` : 'Para tu combo · body splash'}</p>}<p className="text-[10px] uppercase tracking-[0.25em] text-white/70">{selectedProduct.family}{selectedProduct.gender ? ` · ${selectedProduct.gender}` : ''}</p><h2 className={`mt-4 font-serif leading-[1.05] tracking-[-0.06em] ${selectedProduct.name.length > 22 ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl'}`}>{selectedProduct.name}</h2><p className="mt-3 text-sm text-white/70">{selectedProduct.subtitle}</p>{selectedModalVariants.length > 1 && <div className="mt-5 flex flex-wrap gap-2">{selectedModalVariants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariantId((current) => ({ ...current, [selectedProduct.id]: variant.id }))} className={`rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition ${selectedModalVariant!.id === variant.id ? 'border-white bg-white/20 text-white' : 'border-white/25 text-white/55 hover:border-white/50'}`}>{variant.name}</button>)}</div>}<p className="mt-6 text-sm leading-6 text-white/85 sm:mt-8">{selectedProduct.description}</p><div className="my-6 border-y border-white/15 py-5 text-xs sm:my-8"><div className="flex justify-between"><span className="text-white/60">Notas</span><span className="text-right text-white/90">{selectedModalVariant!.notes}</span></div><div className="mt-4 flex justify-between"><span className="text-white/60">Tamaño</span><span className="text-white/90">{selectedProduct.volume}</span></div></div></div><div className="relative z-10 shrink-0 border-t border-white/10 p-6 md:border-0 md:p-12 md:pt-0"><div className="flex items-center justify-between gap-4">{comboPickContext ? <>
+  <span className="text-sm text-white/60">{comboPickFullInModal ? 'Ya elegiste 2 perfumes' : 'Precio incluido en el combo'}</span>
+  <button onClick={() => !comboPickFullInModal && pickForCombo(selectedProduct, comboPickContext)} disabled={comboPickFullInModal} className={`rounded-full px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.18em] transition disabled:cursor-not-allowed disabled:opacity-40 ${comboPickedInModal ? 'border border-white/30 text-white hover:border-white/60' : 'bg-[#c99558] text-black hover:bg-[#dba86c]'}`}>{comboPickedInModal ? 'Quitar del combo' : 'Elegir para el combo'}</button>
+</> : <>
+  <span className="text-xl">{formatPrice(selectedProduct.price)}</span>
+  <button onClick={() => addFromModal(selectedProduct, selectedModalVariant!)} className="rounded-full bg-[#c99558] px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-black transition hover:bg-[#dba86c]">Agregar al carrito</button>
+</>}</div></div></div></div></div></div>}
 
-      <div className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-[#eee9e0] text-[#151412] shadow-2xl transition-transform duration-500 ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}><div className="flex items-center justify-between border-b border-black/10 p-6"><div><p className="text-[10px] uppercase tracking-[0.22em] text-black/45">Tu selección</p><h2 className="mt-1 font-serif text-3xl">Carrito <span className="text-base text-black/45">({cartCount})</span></h2></div><button aria-label="Cerrar carrito" onClick={() => setIsCartOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5"><X /></button></div><div className="flex-1 overflow-y-auto overscroll-y-contain p-6">{cart.length === 0 ? <div className="flex h-full flex-col items-center justify-center text-center"><ShoppingBag className="mb-5 text-black/25" size={30} /><p className="font-serif text-2xl">Tu carrito está vacío.</p><p className="mt-3 max-w-[220px] text-xs leading-5 text-black/45">Sumá una fragancia y empezá a construir tu próxima firma.</p><a href="#coleccion" onClick={() => setIsCartOpen(false)} className="mt-7 inline-flex min-h-[44px] items-center rounded-full bg-[#151412] px-5 py-3 text-[10px] uppercase tracking-[0.18em] text-white">Ver colección</a></div> : <div className="space-y-5">{cart.map((item) => <div key={`${item.product.id}-${item.variant.id}`} className="flex gap-4 border-b border-black/10 pb-5"><div className="flex h-24 w-24 items-center justify-center bg-[#1a1b19]"><img src={item.variant.image} alt={variantLabel(item.product, item.variant)} className="h-full w-full object-contain" /></div><div className="flex flex-1 flex-col justify-between"><div className="flex justify-between gap-3"><h3 className="font-serif text-xl leading-none">{variantLabel(item.product, item.variant)}</h3><span className="text-sm">{formatPrice(item.product.price * item.quantity)}</span></div><div className="flex items-center gap-3 text-xs"><button aria-label="Restar" onClick={() => changeQuantity(item.product.id, item.variant.id, -1)} className="flex h-11 w-11 items-center justify-center rounded-full border border-black/20 hover:border-black/40"><Minus size={11} /></button><span>{item.quantity}</span><button aria-label="Sumar" onClick={() => changeQuantity(item.product.id, item.variant.id, 1)} className="flex h-11 w-11 items-center justify-center rounded-full border border-black/20 hover:border-black/40"><Plus size={11} /></button></div></div></div>)}</div>}</div>{cart.length > 0 && <div className="border-t border-black/10 p-6"><div className="mb-5 flex justify-between text-sm"><span className="text-black/50">Subtotal</span><span>{formatPrice(cartTotal)}</span></div><a href={whatsappCartLink} onClick={trackWhatsappCheckout} target="_blank" rel="noreferrer" className="flex w-full items-center justify-center gap-3 rounded-full bg-[#1f7a4c] py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#17633d]"><MessageCircle size={16} /> Finalizar por WhatsApp</a><p className="mt-4 text-center text-[10px] leading-4 text-black/40">Se abre WhatsApp con tu pedido ya armado — completá tu nombre, DNI y dirección antes de enviarlo.</p></div>}</div>
+      <div className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-[#eee9e0] text-[#151412] shadow-2xl transition-transform duration-500 ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}><div className="flex items-center justify-between border-b border-black/10 p-6"><div><p className="text-[10px] uppercase tracking-[0.22em] text-black/45">Tu selección</p><h2 className="mt-1 font-serif text-3xl">Carrito <span className="text-base text-black/45">({cartCount})</span></h2></div><button aria-label="Cerrar carrito" onClick={() => setIsCartOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5"><X /></button></div><div className="flex-1 overflow-y-auto overscroll-y-contain p-6">{cart.length === 0 ? <div className="flex h-full flex-col items-center justify-center text-center"><ShoppingBag className="mb-5 text-black/25" size={30} /><p className="font-serif text-2xl">Tu carrito está vacío.</p><p className="mt-3 max-w-[220px] text-xs leading-5 text-black/45">Sumá una fragancia y empezá a construir tu próxima firma.</p><a href="#coleccion" onClick={() => setIsCartOpen(false)} className="mt-7 inline-flex min-h-[44px] items-center rounded-full bg-[#151412] px-5 py-3 text-[10px] uppercase tracking-[0.18em] text-white">Ver colección</a></div> : <div className="space-y-5">{cart.map((item) => {
+  const quantityControls = <div className="flex items-center gap-3 text-xs"><button aria-label="Restar" onClick={() => changeQuantity(item.product.id, item.variant.id, -1)} className="flex h-11 w-11 items-center justify-center rounded-full border border-black/20 hover:border-black/40"><Minus size={11} /></button><span>{item.quantity}</span><button aria-label="Sumar" onClick={() => changeQuantity(item.product.id, item.variant.id, 1)} className="flex h-11 w-11 items-center justify-center rounded-full border border-black/20 hover:border-black/40"><Plus size={11} /></button></div>;
+  if (item.variant.images && item.variant.names) {
+    return <div key={`${item.product.id}-${item.variant.id}`} className="border-b border-black/10 pb-5">
+      <div className="flex justify-between gap-3"><h3 className="font-serif text-xl leading-none">{item.product.name}</h3><span className="text-sm">{formatPrice(item.product.price * item.quantity)}</span></div>
+      <div className="mt-4 space-y-3">{item.variant.images.map((image, imageIndex) => <div key={imageIndex} className="flex items-center gap-3"><div className="flex h-14 w-14 shrink-0 items-center justify-center bg-[#1a1b19]"><img src={image} alt="" className="h-full w-full object-contain" /></div><span className="text-sm text-black/80">{item.variant.names![imageIndex]}</span></div>)}</div>
+      <div className="mt-4">{quantityControls}</div>
+    </div>;
+  }
+  return <div key={`${item.product.id}-${item.variant.id}`} className="flex gap-4 border-b border-black/10 pb-5"><div className="flex h-24 w-24 shrink-0 items-center justify-center bg-[#1a1b19]"><img src={item.variant.image} alt={variantLabel(item.product, item.variant)} className="h-full w-full object-contain" /></div><div className="flex flex-1 flex-col justify-between"><div className="flex justify-between gap-3"><h3 className="font-serif text-xl leading-none">{variantLabel(item.product, item.variant)}</h3><span className="text-sm">{formatPrice(item.product.price * item.quantity)}</span></div>{quantityControls}</div></div>;
+})}</div>}</div>{cart.length > 0 && <div className="border-t border-black/10 p-6"><div className="mb-5 flex justify-between text-sm"><span className="text-black/50">Subtotal</span><span>{formatPrice(cartTotal)}</span></div><a href={whatsappCartLink} onClick={trackWhatsappCheckout} target="_blank" rel="noreferrer" className="flex w-full items-center justify-center gap-3 rounded-full bg-[#1f7a4c] py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#17633d]"><MessageCircle size={16} /> Finalizar por WhatsApp</a><p className="mt-4 text-center text-[10px] leading-4 text-black/40">Se abre WhatsApp con tu pedido ya armado — completá tu nombre, DNI y dirección antes de enviarlo.</p></div>}</div>
       {isCartOpen && <button aria-label="Cerrar panel" onClick={() => setIsCartOpen(false)} className="fixed inset-0 z-40 bg-black/45" />}
 
       {toast && <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex justify-center px-5"><div className="animate-toast-in flex items-center gap-3 rounded-full border border-white/15 bg-[#151412]/95 px-5 py-3 text-xs text-white shadow-2xl backdrop-blur-md"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#c99558] text-black"><Check size={12} /></span>{toast}</div></div>}
