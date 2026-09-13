@@ -81,6 +81,13 @@ que Gisela agrego o edito un producto, y Facu pide procesarlo.
    ```
    - Calidad 85, no PNG (hay un hook en este repo que bloquea escribir `.png`
      ahi -- si aparece bloqueado, es este chequeo funcionando, no un bug).
+   - **OJO: no apuntar `<carpeta-origen>` a `fotos-clienta/FOTOS-FINALES/` entera**
+     para cargar un solo producto -- el script reprocesa TODOS los archivos de esa
+     carpeta y los nombra con el numero de archivo de origen (ej.
+     `58-afnan-9am-pour-femme.webp`), que no matchea la convencion real de
+     `public/images/perfumes/` (sin numero). Paso real, ya pisado una vez
+     (2026-09-13): copiar solo la foto nueva a una carpeta temporal, o correr el
+     script y despues renombrar/borrar los sobrantes antes de comitear.
    - El fondo tiene que tener vignette/halo de luz, no negro plano recortado.
      Un fondo negro plano se ve como un recuadro cortado en la tarjeta del
      catalogo -- no se arregla con CSS ni color de acento, hay que regenerar
