@@ -34,6 +34,13 @@ datos: campo `category` en la tabla `perfumes` de Supabase (migración
   tiene lugar físico para llevar un control granular por unidad, así que no aporta valor
   real todavía. No es un olvido ni queda pendiente; se retoma si el catálogo/volumen crece
   lo suficiente como para justificarlo.
+  **[EN REVISIÓN 2026-09-02]** la clienta volvió a pedirlo, pero simplificado: no un
+  contador de unidades (lo que se descartó arriba), sino un interruptor "hay/no hay" por
+  producto que oculta la card del catálogo público. Ofertado como parte de un servicio
+  mensual nuevo (contenido + este desarrollo), documento enviado, todavía sin confirmar por
+  la clienta ni implementado en el código — ver memoria del proyecto
+  `project_servicio-mensual-contenido-catalogo-2026-09`. No tratar como decidido hasta que
+  se confirme e implemente.
 - **Comprador final:** llega mayormente desde redes (Instagram/WhatsApp), compara precio y quiere sentir que el producto es original y que la compra es segura.
 
 ## Objetivo de conversión
