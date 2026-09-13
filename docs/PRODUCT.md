@@ -34,13 +34,16 @@ datos: campo `category` en la tabla `perfumes` de Supabase (migración
   tiene lugar físico para llevar un control granular por unidad, así que no aporta valor
   real todavía. No es un olvido ni queda pendiente; se retoma si el catálogo/volumen crece
   lo suficiente como para justificarlo.
-  **[EN REVISIÓN 2026-09-02]** la clienta volvió a pedirlo, pero simplificado: no un
-  contador de unidades (lo que se descartó arriba), sino un interruptor "hay/no hay" por
-  producto que oculta la card del catálogo público. Ofertado como parte de un servicio
-  mensual nuevo (contenido + este desarrollo), documento enviado, todavía sin confirmar por
-  la clienta ni implementado en el código — ver memoria del proyecto
-  `project_servicio-mensual-contenido-catalogo-2026-09`. No tratar como decidido hasta que
-  se confirme e implemente.
+  **[RESUELTO 2026-09-13]** la clienta volvió a pedirlo, pero simplificado: no un contador
+  de unidades (lo que se descartó arriba), sino un interruptor "hay/no hay" por producto.
+  Confirmado por Facu y ya implementado: campo `in_stock` (boolean, default `true`) en la
+  tabla `perfumes` (migración `20260913120000_add_in_stock_to_perfumes.sql`). Desde
+  `/admin` (`Dashboard.tsx`) se marca "Sin stock" con un botón por fila — no hace falta
+  abrir el formulario de edición. En el sitio público la card **no se oculta**: se pone en
+  gris (`grayscale`), muestra "No disponible" en vez del precio/botón de agregar (tarjeta y
+  modal de detalle), y el producto se ordena siempre al final del catálogo. Decisión de
+  diseño de Facu: mostrarlo desalentado en vez de ocultarlo, para no perder el SEO/tráfico
+  de búsqueda de ese producto.
 - **Comprador final:** llega mayormente desde redes (Instagram/WhatsApp), compara precio y quiere sentir que el producto es original y que la compra es segura.
 
 ## Objetivo de conversión
