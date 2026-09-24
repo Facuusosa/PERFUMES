@@ -269,6 +269,7 @@ function App() {
   const goToCategory = (category: ProductCategory) => {
     setActiveCategory(category);
     setActiveFamily('Todos');
+    setActiveGender(null);
     setCatalogPage(1);
     setIsCollectionMenuOpen(false);
     setIsMenuOpen(false);
@@ -536,7 +537,7 @@ function App() {
 
         <section id="coleccion" className="bg-[#e9e5dd] px-5 py-20 text-[#151412] md:px-12 md:py-28">
           <div className="mx-auto max-w-[1440px]"><div className="mb-14 flex flex-col justify-between gap-8 md:flex-row md:items-end"><div><p className="mb-4 text-[10px] uppercase tracking-[0.3em] text-[#96724b]">La colección</p><h2 className="max-w-xl font-serif text-5xl leading-[.92] tracking-[-0.06em] md:text-7xl">Elegí la nota<br /><i className="font-light">que habla de vos.</i></h2></div><p className="max-w-xs text-sm leading-6 text-black/55">Cada perfume, una manera distinta de dejar huella. Diseñados para acompañarte, no para pasar desapercibidos.</p></div>
-            <div className="mb-8 flex flex-wrap items-start gap-x-8 gap-y-3">{categoryMeta.map((meta) => { const active = !isSearching && activeCategory === meta.value; return <button key={meta.value} onClick={() => { setActiveCategory(meta.value); setActiveFamily('Todos'); setCatalogPage(1); setSearchQuery(''); }} className="group pb-1.5"><span className={`font-serif text-2xl italic tracking-[-0.02em] transition sm:text-3xl ${active ? 'text-[#151412]' : 'text-black/35 group-hover:text-black/60'}`}>{meta.label}</span><span className={`mt-1.5 block h-[2px] w-full transition-colors ${active ? 'bg-[#c99558]' : 'bg-transparent'}`} /></button>; })}</div>
+            <div className="mb-8 flex flex-wrap items-start gap-x-8 gap-y-3">{categoryMeta.map((meta) => { const active = !isSearching && activeCategory === meta.value; return <button key={meta.value} onClick={() => { setActiveCategory(meta.value); setActiveFamily('Todos'); setActiveGender(null); setCatalogPage(1); setSearchQuery(''); }} className="group pb-1.5"><span className={`font-serif text-2xl italic tracking-[-0.02em] transition sm:text-3xl ${active ? 'text-[#151412]' : 'text-black/35 group-hover:text-black/60'}`}>{meta.label}</span><span className={`mt-1.5 block h-[2px] w-full transition-colors ${active ? 'bg-[#c99558]' : 'bg-transparent'}`} /></button>; })}</div>
             <div className="mb-8 flex flex-col divide-y divide-black/10 border-y border-black/10 sm:flex-row sm:divide-x sm:divide-y-0">
               <div className="relative flex flex-1 items-center gap-3 py-4">
                 <Search size={15} className="shrink-0 text-black/35" />
