@@ -29,8 +29,21 @@ datos: campo `category` en la tabla `perfumes` de Supabase (migración
   panel de admin nuevo (`/admin`, ver `CLAUDE.md`) ya está en producción en
   `aygperfumes.com.ar/admin`: la clienta entra con su propio usuario y puede agregar, editar
   y borrar productos con foto, sin tocar código ni Supabase directamente. Probado de punta a
-  punta antes de integrarse. Pendiente menor: el campo `stock` mencionado en este requisito
-  todavía no está en el formulario — decisión de producto sin tomar, no un olvido.
+  punta antes de integrarse. El campo `stock` mencionado en este requisito **[DECIDIDO
+  2026-08-30] no se agrega por ahora** — la clienta confirmó que maneja poco volumen y no
+  tiene lugar físico para llevar un control granular por unidad, así que no aporta valor
+  real todavía. No es un olvido ni queda pendiente; se retoma si el catálogo/volumen crece
+  lo suficiente como para justificarlo.
+  **[RESUELTO 2026-09-13]** la clienta volvió a pedirlo, pero simplificado: no un contador
+  de unidades (lo que se descartó arriba), sino un interruptor "hay/no hay" por producto.
+  Confirmado por Facu y ya implementado: campo `in_stock` (boolean, default `true`) en la
+  tabla `perfumes` (migración `20260913120000_add_in_stock_to_perfumes.sql`). Desde
+  `/admin` (`Dashboard.tsx`) se marca "Sin stock" con un botón por fila — no hace falta
+  abrir el formulario de edición. En el sitio público la card **no se oculta**: se pone en
+  gris (`grayscale`), muestra "No disponible" en vez del precio/botón de agregar (tarjeta y
+  modal de detalle), y el producto se ordena siempre al final del catálogo. Decisión de
+  diseño de Facu: mostrarlo desalentado en vez de ocultarlo, para no perder el SEO/tráfico
+  de búsqueda de ese producto.
 - **Comprador final:** llega mayormente desde redes (Instagram/WhatsApp), compara precio y quiere sentir que el producto es original y que la compra es segura.
 
 ## Objetivo de conversión
@@ -66,8 +79,9 @@ de WhatsApp) en mobile y desktop antes de dar el sitio por terminado.
   100% exacto. Nota para no repetir: durante la carga se confundió por error "Amber Oud Gold
   999.9 Dubai Edition" (nuevo) con el ya existente "Amber Oud Gold Edition" — son dos
   productos reales distintos de Al Haramain, se corrigió antes de aplicar nada a producción.
-- El código de `App.tsx` (`fallbackPerfumes`) solo trae un catálogo de emergencia mínimo (los 6
-  productos originales) para cuando no hay conexión a Supabase — no refleja el catálogo real.
+- El código de `App.tsx` (`fallbackPerfumes`) solo trae un catálogo de emergencia mínimo (3
+  productos que siguen a la venta, con su precio de 2026-11-02; se mantiene a mano, no se sincroniza
+  solo) para cuando no hay conexión a Supabase — no refleja el catálogo real.
   No confundir ese fallback con lo que ve el comprador en producción.
 
 ## Stack (reemplazado el 2026-08-17 — ver `CLAUDE.md` para el detalle completo)

@@ -82,6 +82,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     loadProducts();
   };
 
+  const toggleStock = async (product: Perfume) => {
+    if (!supabase) return;
+    const { error } = await supabase.from('perfumes').update({ in_stock: product.in_stock === false }).eq('id', product.id);
+    if (error) {
+      setActionError('No se pudo actualizar el stock. Probá de nuevo.');
+      return;
+    }
+    setActionError(null);
+    loadProducts();
+  };
+
   if (isCreating || editingProduct) {
     return (
       <ProductForm
@@ -204,6 +215,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <th className="pb-3">Marca</th>
                 <th className="pb-3">Categoría</th>
                 <th className="pb-3 text-right">Precio</th>
+                <th className="pb-3">Stock</th>
                 <th className="pb-3"></th>
               </tr>
             </thead>
@@ -217,6 +229,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   <td className="py-3 text-white/60">{product.brand ?? '—'}</td>
                   <td className="py-3 text-white/60">{product.category ?? 'Perfume'}</td>
                   <td className="py-3 text-right">{formatPrice(product.price)}</td>
+                  <td className="py-3">
+                    <button
+                      onClick={() => toggleStock(product)}
+                      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wide transition ${
+                        product.in_stock === false
+                          ? 'border-white/15 bg-white/5 text-white/40 hover:border-white/30'
+                          : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:border-emerald-500/50'
+                      }`}
+                    >
+                      {product.in_stock === false ? 'Sin stock' : 'Disponible'}
+                    </button>
+                  </td>
                   <td className="py-3 text-right">
                     <button onClick={() => setEditingProduct(product)} className="mr-4 text-xs uppercase text-white/60 hover:text-white">
                       Editar
