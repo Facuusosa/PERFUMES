@@ -1,6 +1,6 @@
 ---
 name: nuevo-producto
-description: Use when adding a new product to the ecommerce-perfumes / A&G Perfumes catalog by writing a Supabase SQL migration, AND when the client (Gisela) already added or edited a product herself from the /admin panel and it needs to be verified/absorbed into "our" catalog (real photo in the repo, notes checked against a real source, row added to fotos-clienta/catalogo-productos.xlsx). Covers photo optimization to WebP, migration format, every static list a product must also appear in (marquee, storySlides, JSON-LD), the family/macroFamily filter check, the Excel master sheet columns, and past mistakes (merging distinct products, uncompressed photos, missing vignette, leaving a default accent color unchanged, notes typed with dots instead of proper separators, pointing the `image` field at a file that isn't deployed yet).
+description: Use when adding a new product to the ecommerce-perfumes / A&G Perfumes catalog by writing a Supabase SQL migration, AND when the client (Gisela) already added or edited a product herself from the /admin panel and it needs to be verified/absorbed into "our" catalog (real photo in the repo, notes checked against a real source, row added to fotos-clienta/catalogo-productos.xlsx). Covers photo optimization to WebP, migration format, every static list a product must also appear in (marquee, storySlides), the family/macroFamily filter check, the Excel master sheet columns, and past mistakes (merging distinct products, uncompressed photos, missing vignette, leaving a default accent color unchanged, notes typed with dots instead of proper separators, pointing the `image` field at a file that isn't deployed yet).
 ---
 
 # Nuevo producto al catalogo
@@ -65,7 +65,7 @@ que Gisela agrego o edito un producto, y Facu pide procesarlo.
 
 5. **Correr los mismos chequeos del Camino A que apliquen**: `family` contra
    `getMacroFamily` (paso 4 de abajo), y si el producto amerita aparecer en
-   marquee/storySlides/JSON-LD (paso 5 de abajo) -- normalmente no hace
+   marquee/storySlides (paso 5 de abajo) -- normalmente no hace
    falta para una carga suelta de la clienta, son secciones curadas a mano.
 
 ## Camino A: Facu lo carga por codigo
@@ -107,8 +107,10 @@ que Gisela agrego o edito un producto, y Facu pide procesarlo.
    Supabase no alcanza:
    - Marquee (franja de texto corrido)
    - `storySlides`
-   - JSON-LD estructurado (SEO)
    - Cualquier otra lista estatica de productos en `src/App.tsx`
+
+   El JSON-LD de `index.html` ya no lista productos (se saco el 2026-11-02: Google
+   solo lo usa en paginas de un solo producto). Vuelve con las paginas por producto.
 
 6. **Aplicar la migracion** y confirmar en el sitio: el producto aparece con
    la categoria, el genero y la familia correctos, y con foto WebP sin cortes.

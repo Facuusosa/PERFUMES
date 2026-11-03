@@ -42,9 +42,9 @@ esa regla, la satisface con el tamaño correcto.
 - `src/App.tsx:36-52`: tipo `Perfume` real — `id, name, subtitle, family, notes, price, volume,
   accent, image, description, variants?, category?, brand?, gender?, in_stock?`. El `id` ya es un
   slug legible (ej. `lattafa-angham`, `victorias-secret-bare-vanilla`).
-- `index.html:21-75`: bloque JSON-LD **desactualizado** — 6 productos viejos hardcodeados con
-  precios de hace meses y `"url": "#coleccion"` (no es una URL real). Hay que sacarlo cuando cada
-  producto tenga su propia página con su propio JSON-LD correcto.
+- `index.html`: el bloque JSON-LD solo trae `Organization`. Los 6 productos viejos (precios
+  desactualizados) se sacaron el 2026-11-02, sin esperar a esta spec: Google solo usa ese marcado
+  en páginas de un solo producto.
 - `public/sitemap.xml`: hoy es un archivo estático a mano con solo la home (creado 16/09).
 - Supabase: tabla `perfumes`, clave pública (`anon key`) ya expuesta en el bundle del cliente —
   reusarla en el Worker no es una exposición nueva.
@@ -84,8 +84,8 @@ Cuando la URL es `/producto/:id`:
    por seguridad, aunque hoy solo Gisela carga contenido desde `/admin`.
 
 ### 4. `index.html` — limpieza
-Sacar el bloque JSON-LD hardcodeado de 6 productos viejos (líneas 21-75) — queda reemplazado por
-el JSON-LD real y actualizado de cada página `/producto/:id`.
+Ya hecha el 2026-11-02: los productos salieron del JSON-LD de `index.html`. Queda solo agregar el
+JSON-LD real de cada página `/producto/:id`.
 
 ### 5. `public/sitemap.xml` → dinámico
 Mover el sitemap al mismo patrón: una ruta `/sitemap.xml` en el Worker (agregarla a

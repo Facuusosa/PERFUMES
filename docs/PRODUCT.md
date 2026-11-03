@@ -79,8 +79,9 @@ de WhatsApp) en mobile y desktop antes de dar el sitio por terminado.
   100% exacto. Nota para no repetir: durante la carga se confundió por error "Amber Oud Gold
   999.9 Dubai Edition" (nuevo) con el ya existente "Amber Oud Gold Edition" — son dos
   productos reales distintos de Al Haramain, se corrigió antes de aplicar nada a producción.
-- El código de `App.tsx` (`fallbackPerfumes`) solo trae un catálogo de emergencia mínimo (los 6
-  productos originales) para cuando no hay conexión a Supabase — no refleja el catálogo real.
+- El código de `App.tsx` (`fallbackPerfumes`) solo trae un catálogo de emergencia mínimo (3
+  productos que siguen a la venta, con su precio de 2026-11-02; se mantiene a mano, no se sincroniza
+  solo) para cuando no hay conexión a Supabase — no refleja el catálogo real.
   No confundir ese fallback con lo que ve el comprador en producción.
 
 ## Stack (reemplazado el 2026-08-17 — ver `CLAUDE.md` para el detalle completo)
