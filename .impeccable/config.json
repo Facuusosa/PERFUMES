@@ -19,7 +19,7 @@
         "rule": "all-caps-body",
         "value": "*",
         "files": [
-          "reporte-analytics-semana.html"
+          ".claude/analytics-history/reporte-analytics-semana.html"
         ],
         "createdAt": "2026-09-12T20:22:19.468Z",
         "reason": "eyebrow label de 5 palabras (patron editorial estandar), no es parrafo de lectura"

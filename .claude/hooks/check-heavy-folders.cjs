@@ -9,7 +9,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const IGNORE_ALWAYS = new Set(['node_modules', 'dist', '.git', '.superpowers']);
 // Carpetas de trabajo conocidas y su limite razonable en MB antes de avisar.
-const KNOWN_LIMITS_MB = { 'fotos-clienta': 250 };
+const KNOWN_LIMITS_MB = { 'fotos-clienta': 250, 'para-redes': 250 };
 const UNKNOWN_FOLDER_LIMIT_MB = 20; // cualquier carpeta nueva no listada arriba
 
 function sizeMB(dir) {

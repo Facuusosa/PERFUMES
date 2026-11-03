@@ -50,8 +50,8 @@ CLAUDE.local.md
 # historial de git de antes de la conversion a webp; no duplicar en el repo)
 /assets-originales-fotos-perfumes
 
-# Local Netlify folder
-.netlify
+# Cache local de Cloudflare Wrangler
+.wrangler/
 
 # Supabase CLI local cache
 /supabase/.temp
